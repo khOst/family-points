@@ -1,15 +1,49 @@
-import { useState } from 'react';
-import { Plus, Users as UsersIcon } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, Modal, Input } from '../components/ui';
+import { useState, useEffect } from 'react';
+import { Plus, UserPlus } from 'lucide-react';
+import { Button } from '../components/ui';
+import { GroupCard, CreateGroupModal, JoinGroupModal } from '../components/groups';
+import { useGroupsStore } from '../stores/groupsStore';
+import { useAuthStore } from '../stores/authStore';
+import type { Group } from '../services/groupsService';
 
 export function Groups() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const { groups, isLoading, fetchGroups, leaveGroup } = useGroupsStore();
+  const { user } = useAuthStore();
 
-  const groups = [
-    { id: '1', name: 'Smith Family', members: 4, points: 1250 },
-    { id: '2', name: 'House Chores', members: 3, points: 890 },
-    { id: '3', name: 'Weekend Tasks', members: 2, points: 450 },
-  ];
+  useEffect(() => {
+    if (user) {
+      fetchGroups();
+    }
+  }, [user, fetchGroups]);
+
+  const handleEditGroup = (group: Group) => {
+    console.log('Edit group:', group);
+    // TODO: Implement edit group functionality
+  };
+
+  const handleLeaveGroup = async (groupId: string) => {
+    try {
+      await leaveGroup(groupId);
+    } catch (error) {
+      console.error('Failed to leave group:', error);
+    }
+  };
+
+  const handleShowInvite = (group: Group) => {
+    console.log('Show invite for group:', group);
+    // TODO: Implement invite modal functionality
+  };
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to view your groups</h2>
+        <p className="text-gray-600">You need to be authenticated to manage your groups.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -18,69 +52,73 @@ export function Groups() {
           <h1 className="text-2xl font-bold text-gray-900">Groups</h1>
           <p className="text-gray-600">Manage your family groups and memberships</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Group
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setShowJoinModal(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Join Group
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Group
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {groups.map((group) => (
-          <Card key={group.id} className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">{group.name}</h3>
-                <div className="flex items-center text-gray-500">
-                  <UsersIcon className="h-4 w-4 mr-1" />
-                  <span className="text-sm">{group.members}</span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Points</span>
-                  <span className="text-sm font-medium">{group.points.toLocaleString()}</span>
-                </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  View Details
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="text-gray-600 mt-2">Loading groups...</p>
+        </div>
+      ) : groups.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="max-w-md mx-auto">
+            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <UserPlus className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No groups yet</h3>
+            <p className="text-gray-600 mb-6">
+              Create your first group or join an existing one to start managing family tasks and points.
+            </p>
+            <div className="flex items-center gap-3 justify-center">
+              <Button
+                onClick={() => setShowJoinModal(true)}
+                variant="outline"
+              >
+                Join Group
+              </Button>
+              <Button onClick={() => setShowCreateModal(true)}>
+                Create Group
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {groups.map((group) => (
+            <GroupCard
+              key={group.id}
+              group={group}
+              onEdit={handleEditGroup}
+              onLeave={handleLeaveGroup}
+              onShowInvite={handleShowInvite}
+            />
+          ))}
+        </div>
+      )}
 
-      <Modal
+      <CreateGroupModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Create New Group"
-      >
-        <form className="space-y-4">
-          <Input
-            label="Group Name"
-            placeholder="Enter group name"
-            required
-          />
-          <Input
-            label="Description"
-            placeholder="Enter group description (optional)"
-          />
-          <div className="flex space-x-3">
-            <Button type="submit" className="flex-1">
-              Create Group
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateModal(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      />
+
+      <JoinGroupModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+      />
     </div>
   );
 }
