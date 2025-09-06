@@ -80,7 +80,7 @@ export const tasksService = {
   },
 
   async updateTaskStatus(taskId: string, status: Task['status'], userId: string): Promise<void> {
-    const updates: any = {
+    const updates: Record<string, Date | string> = {
       status,
       updatedAt: new Date(),
     };

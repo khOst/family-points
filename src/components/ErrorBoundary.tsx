@@ -32,10 +32,10 @@ export class ErrorBoundary extends React.Component<Props, State> {
             <p className="text-gray-600 mb-4">
               An error occurred while rendering the application.
             </p>
-            {this.state.error && (
+            {process.env.NODE_ENV === 'development' && this.state.error && (
               <details className="mb-4">
                 <summary className="cursor-pointer text-sm font-medium">
-                  Error Details
+                  Error Details (Development Only)
                 </summary>
                 <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
                   {this.state.error.toString()}

@@ -6,8 +6,9 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { createUserDocument } from '../utils/userHelpers';
 
 export interface User {
   id: string;
@@ -64,6 +65,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
           isAuthenticated: true, 
           isLoading: false 
         });
+      } else {
+        // User exists in Auth but not in Firestore - create a basic user document
+        const user = await createUserDocument(firebaseUser);
+        
+        set({ 
+          user, 
+          isAuthenticated: true, 
+          isLoading: false 
+        });
       }
     } catch (error) {
       set({ isLoading: false });
@@ -79,23 +89,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       const firebaseUser = userCredential.user;
       
       // Create user document in Firestore
-      const user: User = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email!,
-        name: userData.name,
-        avatar: userData.avatar,
-        dateOfBirth: userData.dateOfBirth,
-        totalPoints: 0,
-        createdAt: new Date(),
-      };
-      
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
-        name: user.name,
-        avatar: user.avatar,
-        dateOfBirth: user.dateOfBirth,
-        totalPoints: user.totalPoints,
-        createdAt: user.createdAt,
-      });
+      const user = await createUserDocument(firebaseUser, userData);
       
       set({ 
         user, 
@@ -109,17 +103,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   logout: async () => {
-    try {
-      await signOut(auth);
-      set({ 
-        user: null, 
-        isAuthenticated: false, 
-        isLoading: false 
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      throw error;
-    }
+    await signOut(auth);
+    set({ 
+      user: null, 
+      isAuthenticated: false, 
+      isLoading: false 
+    });
   },
 
   setUser: (user) => {
@@ -154,10 +143,22 @@ export const useAuthStore = create<AuthStore>((set) => ({
               isAuthenticated: true, 
               isLoading: false 
             });
+          } else {
+            // User exists in Auth but not in Firestore - create a basic user document
+            const user = await createUserDocument(firebaseUser);
+
+            set({ 
+              user, 
+              isAuthenticated: true, 
+              isLoading: false 
+            });
           }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          set({ isLoading: false });
+        } catch {
+          set({ 
+            user: null, 
+            isAuthenticated: false, 
+            isLoading: false 
+          });
         }
       } else {
         set({ 

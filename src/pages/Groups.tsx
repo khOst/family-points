@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Users as UsersIcon } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, Modal, Input } from '../components/ui';
 

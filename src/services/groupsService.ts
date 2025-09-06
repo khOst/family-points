@@ -101,4 +101,26 @@ export const groupsService = {
       });
     }
   },
+
+  async getGroupByInviteCode(inviteCode: string): Promise<Group | null> {
+    const q = query(
+      collection(db, 'groups'),
+      where('inviteCode', '==', inviteCode)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const doc = querySnapshot.docs[0];
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt.toDate(),
+      updatedAt: data.updatedAt.toDate(),
+    } as Group;
+  },
 };

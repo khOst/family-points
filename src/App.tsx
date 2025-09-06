@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
@@ -10,13 +10,22 @@ import { Wishlist } from './pages/Wishlist';
 import { Notifications } from './pages/Notifications';
 import { Profile } from './pages/Profile';
 import { useAuthStore } from './stores/authStore';
+import { LoadingState } from './components/ui';
 
 function App() {
-  const { isAuthenticated, initializeAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, initializeAuth } = useAuthStore();
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-25 flex items-center justify-center">
+        <LoadingState message="Loading Family Points..." size="lg" />
+      </div>
+    );
+  }
 
   return (
     <Router>

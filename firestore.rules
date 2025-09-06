@@ -1,0 +1,127 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isGroupMember(groupId) {
+      return isAuthenticated() && 
+             request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+    }
+    
+    function isGroupOwner(groupId) {
+      return isAuthenticated() && 
+             request.auth.uid == get(/databases/$(database)/documents/groups/$(groupId)).data.ownerId;
+    }
+    
+    function isGroupMemberOrOwner(groupId) {
+      return isGroupMember(groupId) || isGroupOwner(groupId);
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read and write their own document
+      allow read, write: if isOwner(userId);
+      
+      // Group members can read basic user info for other members
+      allow read: if isAuthenticated() && 
+                     exists(/databases/$(database)/documents/groups/$(request.auth.uid)) &&
+                     userId in get(/databases/$(database)/documents/groups/$(request.auth.uid)).data.memberIds;
+    }
+    
+    // Groups collection
+    match /groups/{groupId} {
+      // Group members can read the group
+      allow read: if isGroupMemberOrOwner(groupId);
+      
+      // Only group owner can update group details
+      allow update: if isGroupOwner(groupId) && 
+                       // Prevent changing owner or critical fields maliciously
+                       request.resource.data.ownerId == resource.data.ownerId &&
+                       request.resource.data.inviteCode == resource.data.inviteCode;
+      
+      // Only group owner can delete the group
+      allow delete: if isGroupOwner(groupId);
+      
+      // Anyone authenticated can create a group (they become the owner)
+      allow create: if isAuthenticated() && 
+                       request.resource.data.ownerId == request.auth.uid &&
+                       request.resource.data.memberIds is list &&
+                       request.auth.uid in request.resource.data.memberIds;
+    }
+    
+    // Tasks collection
+    match /tasks/{taskId} {
+      // Group members can read tasks in their groups
+      allow read: if isAuthenticated() && 
+                     isGroupMemberOrOwner(resource.data.groupId);
+      
+      // Group members can create tasks (assigned to group members)
+      allow create: if isAuthenticated() && 
+                       isGroupMemberOrOwner(request.resource.data.groupId) &&
+                       request.resource.data.assignedBy == request.auth.uid &&
+                       request.resource.data.assignedTo in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberIds;
+      
+      // Task assignee can update status, group owner/assigner can update task details
+      allow update: if isAuthenticated() && (
+                       // Assignee can update status
+                       (request.auth.uid == resource.data.assignedTo && 
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt', 'updatedAt'])) ||
+                       // Assigner or group owner can update task details
+                       (request.auth.uid == resource.data.assignedBy || isGroupOwner(resource.data.groupId))
+                     );
+      
+      // Only assigner or group owner can delete tasks
+      allow delete: if isAuthenticated() && 
+                       (request.auth.uid == resource.data.assignedBy || isGroupOwner(resource.data.groupId));
+    }
+    
+    // Wishlist items collection
+    match /wishlistItems/{itemId} {
+      // Group members can read wishlist items in their groups
+      allow read: if isAuthenticated() && 
+                     isGroupMemberOrOwner(resource.data.groupId);
+      
+      // Users can create wishlist items for themselves in groups they belong to
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       isGroupMemberOrOwner(request.resource.data.groupId);
+      
+      // Users can update/delete their own wishlist items
+      allow update, delete: if isAuthenticated() && 
+                               request.auth.uid == resource.data.userId;
+      
+      // Group members can update status when gifting items
+      allow update: if isAuthenticated() && 
+                       isGroupMemberOrOwner(resource.data.groupId) &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'giftedBy', 'giftedAt', 'updatedAt']) &&
+                       request.resource.data.status == 'gifted' &&
+                       request.resource.data.giftedBy == request.auth.uid;
+    }
+    
+    // Notifications collection (if you add this feature later)
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isAuthenticated() && 
+                     request.auth.uid == resource.data.userId;
+      
+      // System/group members can create notifications
+      allow create: if isAuthenticated();
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == resource.data.userId;
+      
+      // Users can delete their own notifications
+      allow delete: if isAuthenticated() && 
+                       request.auth.uid == resource.data.userId;
+    }
+  }
+}

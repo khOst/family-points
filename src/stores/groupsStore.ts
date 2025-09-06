@@ -73,9 +73,23 @@ export const useGroupsStore = create<GroupsStore>((set, get) => ({
         throw new Error('User not authenticated');
       }
       
-      // For now, this is a placeholder that needs backend logic
-      console.log('Attempting to join group with code:', inviteCode);
-      throw new Error('Join group functionality requires backend implementation');
+      // Find group by invite code
+      const groupByCode = await groupsService.getGroupByInviteCode(inviteCode);
+      if (!groupByCode) {
+        throw new Error('Invalid invite code');
+      }
+
+      // Check if user is already a member
+      if (groupByCode.memberIds.includes(user.id)) {
+        throw new Error('You are already a member of this group');
+      }
+
+      // Add user to the group
+      await groupsService.addMember(groupByCode.id, user.id);
+      
+      // Refresh groups list
+      await get().fetchGroups();
+      set({ isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;

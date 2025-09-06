@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, Users, CheckSquare, Heart, Bell, User, LogOut } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -26,7 +26,7 @@ export function Layout() {
     <div className="min-h-screen bg-gray-25">
       <nav className="glass-effect sticky top-0 z-40 border-b border-gray-150/50">
         <div className="max-w-6xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between h-18">
+          <div className="flex justify-between h-12">
             <div className="flex items-center">
               <Link to="/" className="text-xl font-bold text-gray-900 tracking-tight">
                 Family Points

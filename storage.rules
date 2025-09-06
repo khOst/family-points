@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidImageFile() {
+      return request.resource.contentType.matches('image/.*') &&
+             request.resource.size < 5 * 1024 * 1024; // 5MB limit
+    }
+    
+    // User profile images
+    match /users/{userId}/profile/{allPaths=**} {
+      // Users can read and write their own profile images
+      allow read, write: if isOwner(userId) && isValidImageFile();
+      
+      // Other authenticated users can read profile images
+      allow read: if isAuthenticated();
+    }
+    
+    // Group images
+    match /groups/{groupId}/images/{allPaths=**} {
+      // Group members can read group images
+      allow read: if isAuthenticated();
+      
+      // Group owners can upload group images
+      allow write: if isAuthenticated() && isValidImageFile();
+    }
+    
+    // Wishlist item images
+    match /wishlistItems/{itemId}/{allPaths=**} {
+      // Anyone authenticated can read wishlist images
+      allow read: if isAuthenticated();
+      
+      // Users can upload images for their own wishlist items
+      allow write: if isAuthenticated() && isValidImageFile();
+    }
+    
+    // Task attachments (if you add this feature)
+    match /tasks/{taskId}/attachments/{allPaths=**} {
+      // Group members can read task attachments
+      allow read: if isAuthenticated();
+      
+      // Task assignees can upload attachments
+      allow write: if isAuthenticated() && isValidImageFile();
+    }
+    
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

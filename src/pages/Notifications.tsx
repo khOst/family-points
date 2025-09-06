@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Bell, CheckCircle, Clock, Users } from 'lucide-react';
 import { Card, CardContent } from '../components/ui';
 

@@ -1,23 +1,40 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input, Card, CardContent } from '../components/ui';
 import { useAuthStore } from '../stores/authStore';
+import { loginSchema } from '../utils/validation';
+import { getErrorMessage } from '../utils/errorMessages';
+import type { ZodIssue } from 'zod';
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   
   const { login, isLoading } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
+    
+    // Validate form data
+    const validationResult = loginSchema.safeParse({ email, password });
+    if (!validationResult.success) {
+      const errors: { email?: string; password?: string } = {};
+      validationResult.error.issues.forEach((err: ZodIssue) => {
+        if (err.path[0] === 'email') errors.email = err.message;
+        if (err.path[0] === 'password') errors.password = err.message;
+      });
+      setFieldErrors(errors);
+      return;
+    }
     
     try {
       await login(email, password);
     } catch (err) {
-      setError('Invalid email or password');
+      setError(getErrorMessage(err));
     }
   };
 
@@ -33,6 +50,12 @@ export function Login() {
             <p className="text-gray-500 text-balance">Sign in to your Family Points account</p>
           </div>
           
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               type="email"
@@ -40,6 +63,7 @@ export function Login() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              error={fieldErrors.email}
               required
             />
             <Input
@@ -48,11 +72,11 @@ export function Login() {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              error={error}
+              error={fieldErrors.password}
               required
             />
             
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" loading={isLoading}>
               {isLoading ? 'Signing In...' : 'Continue'}
             </Button>
           </form>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Calendar, Clock, User } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, Modal, Input } from '../components/ui';
+import { useState } from 'react';
+import { Plus, Calendar, User, CheckCircle, Clock } from 'lucide-react';
+import { Button, Card, CardContent, Modal, Input } from '../components/ui';
 
 export function Tasks() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -46,6 +46,17 @@ export function Tasks() {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -68,11 +79,12 @@ export function Tasks() {
                   <div className="flex items-center space-x-3">
                     <h3 className="text-lg font-medium">{task.title}</h3>
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                      className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
                         task.status
                       )}`}
                     >
-                      {task.status}
+                      {getStatusIcon(task.status)}
+                      <span className="ml-1">{task.status}</span>
                     </span>
                   </div>
                   <p className="text-gray-600 mt-2">{task.description}</p>

@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input, Card, CardContent } from '../components/ui';
 import { useAuthStore } from '../stores/authStore';
+import { registerSchema } from '../utils/validation';
+import { getErrorMessage } from '../utils/errorMessages';
+import type { ZodIssue } from 'zod';
 
 export function Register() {
   const [formData, setFormData] = useState({
@@ -12,15 +15,36 @@ export function Register() {
     confirmPassword: '',
   });
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   
   const { register, isLoading } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setFieldErrors({ confirmPassword: 'Passwords do not match' });
+      return;
+    }
+
+    // Validate form data
+    const validationData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      dateOfBirth: new Date(formData.dateOfBirth),
+    };
+    
+    const validationResult = registerSchema.safeParse(validationData);
+    if (!validationResult.success) {
+      const errors: Record<string, string> = {};
+      validationResult.error.issues.forEach((err: ZodIssue) => {
+        const field = err.path[0] as string;
+        errors[field] = err.message;
+      });
+      setFieldErrors(errors);
       return;
     }
     
@@ -32,7 +56,7 @@ export function Register() {
         avatar: undefined,
       }, formData.password);
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError(getErrorMessage(err));
     }
   };
 
@@ -52,6 +76,12 @@ export function Register() {
             <p className="text-gray-500 text-balance">Join Family Points and start earning rewards</p>
           </div>
           
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <Input
               type="text"
@@ -59,6 +89,7 @@ export function Register() {
               placeholder="Enter your full name"
               value={formData.name}
               onChange={handleChange('name')}
+              error={fieldErrors.name}
               required
             />
             <Input
@@ -67,6 +98,7 @@ export function Register() {
               placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange('email')}
+              error={fieldErrors.email}
               required
             />
             <Input
@@ -74,6 +106,7 @@ export function Register() {
               label="Date of Birth"
               value={formData.dateOfBirth}
               onChange={handleChange('dateOfBirth')}
+              error={fieldErrors.dateOfBirth}
               required
             />
             <Input
@@ -82,6 +115,7 @@ export function Register() {
               placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange('password')}
+              error={fieldErrors.password}
               required
             />
             <Input
@@ -90,11 +124,11 @@ export function Register() {
               placeholder="Confirm your password"
               value={formData.confirmPassword}
               onChange={handleChange('confirmPassword')}
-              error={error}
+              error={fieldErrors.confirmPassword}
               required
             />
             
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" loading={isLoading}>
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>

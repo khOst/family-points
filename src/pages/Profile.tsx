@@ -1,5 +1,5 @@
-import React from 'react';
-import { User, Trophy, Calendar, Settings } from 'lucide-react';
+
+import { User, Trophy, Settings } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader } from '../components/ui';
 
 export function Profile() {

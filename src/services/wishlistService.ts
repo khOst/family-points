@@ -76,7 +76,7 @@ export const wishlistService = {
     })) as WishlistItem[];
   },
 
-  async purchaseItem(itemId: string, _userId: string): Promise<void> {
+  async purchaseItem(itemId: string): Promise<void> {
     await updateDoc(doc(db, 'wishlistItems', itemId), {
       status: 'purchased',
       purchasedAt: new Date(),

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Card, CardContent, CardHeader } from '../components/ui';
 import { Users, CheckCircle, Trophy } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export function Dashboard() {
 
         <Card>
           <CardContent className="text-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-success-400 to-success-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
               <CheckCircle className="h-6 w-6 text-white" />
             </div>
             <p className="text-3xl font-bold text-gray-900 mb-1">24</p>
