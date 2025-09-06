@@ -1,0 +1,48 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Layout } from './components/Layout';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
+import { Dashboard } from './pages/Dashboard';
+import { Groups } from './pages/Groups';
+import { Tasks } from './pages/Tasks';
+import { Wishlist } from './pages/Wishlist';
+import { Notifications } from './pages/Notifications';
+import { Profile } from './pages/Profile';
+import { useAuthStore } from './stores/authStore';
+
+function App() {
+  const { isAuthenticated, initializeAuth } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  return (
+    <Router>
+      <Routes>
+        {!isAuthenticated ? (
+          <>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </>
+        ) : (
+          <>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="groups" element={<Groups />} />
+              <Route path="tasks" element={<Tasks />} />
+              <Route path="wishlist" element={<Wishlist />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </>
+        )}
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
