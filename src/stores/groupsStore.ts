@@ -9,6 +9,8 @@ interface GroupsStore {
   currentGroup: Group | null;
   fetchGroups: () => Promise<void>;
   createGroup: (groupData: Omit<Group, 'id' | 'ownerId' | 'memberIds' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateGroup: (groupId: string, updates: Partial<Omit<Group, 'id' | 'createdAt'>>) => Promise<void>;
+  deleteGroup: (groupId: string) => Promise<void>;
   joinGroup: (inviteCode: string) => Promise<void>;
   leaveGroup: (groupId: string) => Promise<void>;
   setCurrentGroup: (group: Group | null) => void;
@@ -56,6 +58,46 @@ export const useGroupsStore = create<GroupsStore>((set, get) => ({
       });
       
       // Refresh groups list
+      await get().fetchGroups();
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  updateGroup: async (groupId, updates) => {
+    set({ isLoading: true });
+    
+    try {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        set({ isLoading: false });
+        throw new Error('User not authenticated');
+      }
+      
+      await groupsService.updateGroup(groupId, updates);
+      
+      // Refresh groups list to get updated data
+      await get().fetchGroups();
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  deleteGroup: async (groupId) => {
+    set({ isLoading: true });
+    
+    try {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        set({ isLoading: false });
+        throw new Error('User not authenticated');
+      }
+      
+      await groupsService.deleteGroup(groupId);
+      
+      // Refresh groups list to remove the deleted group
       await get().fetchGroups();
     } catch (error) {
       set({ isLoading: false });

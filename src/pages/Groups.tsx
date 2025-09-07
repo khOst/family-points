@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, UserPlus } from 'lucide-react';
 import { Button } from '../components/ui';
-import { GroupCard, CreateGroupModal, JoinGroupModal } from '../components/groups';
+import { GroupCard, CreateGroupModal, JoinGroupModal, EditGroupModal } from '../components/groups';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useAuthStore } from '../stores/authStore';
 import type { Group } from '../services/groupsService';
@@ -9,7 +9,9 @@ import type { Group } from '../services/groupsService';
 export function Groups() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const { groups, isLoading, fetchGroups, leaveGroup } = useGroupsStore();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const { groups, isLoading, fetchGroups, leaveGroup, deleteGroup } = useGroupsStore();
   const { user } = useAuthStore();
 
   useEffect(() => {
@@ -19,8 +21,8 @@ export function Groups() {
   }, [user, fetchGroups]);
 
   const handleEditGroup = (group: Group) => {
-    console.log('Edit group:', group);
-    // TODO: Implement edit group functionality
+    setSelectedGroup(group);
+    setShowEditModal(true);
   };
 
   const handleLeaveGroup = async (groupId: string) => {
@@ -28,6 +30,14 @@ export function Groups() {
       await leaveGroup(groupId);
     } catch (error) {
       console.error('Failed to leave group:', error);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    try {
+      await deleteGroup(groupId);
+    } catch (error) {
+      console.error('Failed to delete group:', error);
     }
   };
 
@@ -104,6 +114,7 @@ export function Groups() {
               group={group}
               onEdit={handleEditGroup}
               onLeave={handleLeaveGroup}
+              onDelete={handleDeleteGroup}
               onShowInvite={handleShowInvite}
             />
           ))}
@@ -118,6 +129,15 @@ export function Groups() {
       <JoinGroupModal
         isOpen={showJoinModal}
         onClose={() => setShowJoinModal(false)}
+      />
+
+      <EditGroupModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedGroup(null);
+        }}
+        group={selectedGroup}
       />
     </div>
   );

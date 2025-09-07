@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { Button } from './Button';
 
@@ -10,10 +10,34 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscKey);
+      return () => {
+        document.removeEventListener('keydown', handleEscKey);
+      };
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
+  const handleBackdropClick = (event: React.MouseEvent) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 bg-gray-900/20 backdrop-blur-sm flex items-center justify-center p-4 z-50 !mt-0">
+    <div 
+      className="fixed top-0 left-0 right-0 bottom-0 bg-gray-900/20 backdrop-blur-sm flex items-center justify-center p-4 z-50 !mt-0"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-apple-lg border border-gray-100">
         <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
           {title && <h2 className="text-lg font-semibold tracking-tight">{title}</h2>}
