@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Clock } from 'lucide-react';
+import { Users, Clock, Trash2 } from 'lucide-react';
 import { Modal, Button, Input } from '../ui';
 import { useGroupsStore } from '../../stores/groupsStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -9,6 +9,7 @@ interface EditGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
   group: Group | null;
+  onDelete?: (groupId: string) => void;
 }
 
 interface GroupForm {
@@ -16,7 +17,7 @@ interface GroupForm {
   description: string;
 }
 
-export function EditGroupModal({ isOpen, onClose, group }: EditGroupModalProps) {
+export function EditGroupModal({ isOpen, onClose, group, onDelete }: EditGroupModalProps) {
   const { updateGroup, isLoading } = useGroupsStore();
   const { user } = useAuthStore();
   
@@ -80,6 +81,19 @@ export function EditGroupModal({ isOpen, onClose, group }: EditGroupModalProps) 
     });
     setErrors({});
     onClose();
+  };
+
+  const handleDelete = () => {
+    if (!group || !onDelete) return;
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${group.name}"? This action cannot be undone and will remove the group for all members.`
+    );
+    
+    if (confirmed) {
+      onDelete(group.id);
+      handleClose();
+    }
   };
 
   if (!group) return null;
@@ -156,6 +170,25 @@ export function EditGroupModal({ isOpen, onClose, group }: EditGroupModalProps) 
             <p className="text-sm text-yellow-800">
               <strong>Note:</strong> Only the group owner can make changes to the group settings.
             </p>
+          </div>
+        )}
+
+        {/* Danger Zone - Only for owners */}
+        {isOwner && onDelete && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+            <h4 className="text-sm font-medium text-red-900 mb-2">Danger Zone</h4>
+            <p className="text-sm text-red-700 mb-3">
+              Deleting this group will permanently remove it for all members. This action cannot be undone.
+            </p>
+            <Button
+              type="button"
+              onClick={handleDelete}
+              variant="outline"
+              className="text-red-700 border-red-300 hover:bg-red-100 hover:border-red-400 flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Group
+            </Button>
           </div>
         )}
 

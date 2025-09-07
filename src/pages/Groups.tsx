@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, UserPlus } from 'lucide-react';
 import { Button } from '../components/ui';
-import { GroupCard, CreateGroupModal, JoinGroupModal, EditGroupModal } from '../components/groups';
+import { GroupCard, CreateGroupModal, JoinGroupModal, EditGroupModal, InviteModal } from '../components/groups';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useAuthStore } from '../stores/authStore';
 import type { Group } from '../services/groupsService';
@@ -10,6 +10,7 @@ export function Groups() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const { groups, isLoading, fetchGroups, leaveGroup, deleteGroup } = useGroupsStore();
   const { user } = useAuthStore();
@@ -42,8 +43,8 @@ export function Groups() {
   };
 
   const handleShowInvite = (group: Group) => {
-    console.log('Show invite for group:', group);
-    // TODO: Implement invite modal functionality
+    setSelectedGroup(group);
+    setShowInviteModal(true);
   };
 
   if (!user) {
@@ -114,7 +115,6 @@ export function Groups() {
               group={group}
               onEdit={handleEditGroup}
               onLeave={handleLeaveGroup}
-              onDelete={handleDeleteGroup}
               onShowInvite={handleShowInvite}
             />
           ))}
@@ -135,6 +135,16 @@ export function Groups() {
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false);
+          setSelectedGroup(null);
+        }}
+        group={selectedGroup}
+        onDelete={handleDeleteGroup}
+      />
+
+      <InviteModal
+        isOpen={showInviteModal}
+        onClose={() => {
+          setShowInviteModal(false);
           setSelectedGroup(null);
         }}
         group={selectedGroup}
