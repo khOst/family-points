@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Clock, DollarSign } from 'lucide-react';
 import { Modal, Button, Input } from '../ui';
 import { useWishlistStore } from '../../stores/wishlistStore';
-import { useAuthStore } from '../../stores/authStore';
 import { useGroupsStore } from '../../stores/groupsStore';
 import type { WishlistItem } from '../../services/wishlistService';
 
-interface AddWishlistModalProps {
+interface EditWishlistModalProps {
   isOpen: boolean;
   onClose: () => void;
+  item: WishlistItem | null;
 }
 
 interface WishlistForm {
@@ -27,9 +27,8 @@ interface WishlistFormErrors {
   groupId?: string;
 }
 
-export function AddWishlistModal({ isOpen, onClose }: AddWishlistModalProps) {
-  const { addWishlistItem, isLoading } = useWishlistStore();
-  const { user } = useAuthStore();
+export function EditWishlistModal({ isOpen, onClose, item }: EditWishlistModalProps) {
+  const { updateWishlistItem, isLoading } = useWishlistStore();
   const { groups } = useGroupsStore();
   
   const [form, setForm] = useState<WishlistForm>({
@@ -41,6 +40,20 @@ export function AddWishlistModal({ isOpen, onClose }: AddWishlistModalProps) {
   });
   
   const [errors, setErrors] = useState<WishlistFormErrors>({});
+
+  // Populate form when item changes
+  useEffect(() => {
+    if (item) {
+      setForm({
+        title: item.title,
+        description: item.description,
+        cost: item.cost,
+        imageUrl: item.imageUrl || '',
+        groupId: item.groupId,
+      });
+      setErrors({});
+    }
+  }, [item]);
 
   const validateForm = (): boolean => {
     const newErrors: WishlistFormErrors = {};
@@ -87,24 +100,21 @@ export function AddWishlistModal({ isOpen, onClose }: AddWishlistModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !user) return;
+    if (!validateForm() || !item) return;
 
     try {
-      const wishlistItem: Omit<WishlistItem, 'id' | 'createdAt' | 'updatedAt'> = {
+      const updates: Partial<Omit<WishlistItem, 'id' | 'createdAt' | 'updatedAt'>> = {
         title: form.title.trim(),
         description: form.description.trim(),
         cost: form.cost,
-        userId: user.id,
         groupId: form.groupId,
-        status: 'available' as const,
         ...(form.imageUrl.trim() && { imageUrl: form.imageUrl.trim() })
       };
 
-      await addWishlistItem(wishlistItem);
-      
+      await updateWishlistItem(item.id, updates);
       handleClose();
     } catch (error) {
-      console.error('Failed to add wishlist item:', error);
+      console.error('Failed to update wishlist item:', error);
     }
   };
 
@@ -127,15 +137,17 @@ export function AddWishlistModal({ isOpen, onClose }: AddWishlistModalProps) {
     }).format(value);
   };
 
+  if (!item) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add Wishlist Item">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Edit Wishlist Item">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="text-center mb-6">
           <div className="mx-auto w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
             <Heart className="h-8 w-8 text-pink-600" />
           </div>
           <p className="text-gray-600 text-sm">
-            Add something special you'd like to your wishlist. Family members can gift it to you when you earn enough points!
+            Update the details of your wishlist item.
           </p>
         </div>
 
@@ -252,17 +264,6 @@ export function AddWishlistModal({ isOpen, onClose }: AddWishlistModalProps) {
           </div>
         </div>
 
-        {/* Info Box */}
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">💡 Tips for great wishlist items:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Be specific about models, sizes, or colors you prefer</li>
-            <li>• Include links to where the item can be purchased</li>
-            <li>• Set realistic prices that match your points-earning pace</li>
-            <li>• Update items if you no longer want them</li>
-          </ul>
-        </div>
-
         {/* Action Buttons */}
         <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
           <Button type="button" variant="outline" onClick={handleClose}>
@@ -276,12 +277,12 @@ export function AddWishlistModal({ isOpen, onClose }: AddWishlistModalProps) {
             {isLoading ? (
               <>
                 <Clock className="h-4 w-4 animate-spin" />
-                Adding...
+                Updating...
               </>
             ) : (
               <>
                 <Heart className="h-4 w-4" />
-                Add to Wishlist
+                Update Item
               </>
             )}
           </Button>

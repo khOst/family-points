@@ -1,19 +1,23 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, CheckCircle, Trophy, Plus, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, Button, Skeleton } from '../components/ui';
 import { PointsDisplay } from '../components/points';
 import { CreateTaskModal } from '../components/tasks/CreateTaskModal';
+import { AddWishlistModal } from '../components/wishlist';
 import { useAuthStore } from '../stores/authStore';
 import { useTasksStore } from '../stores/tasksStore';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useWishlistStore } from '../stores/wishlistStore';
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { tasks, fetchTasks, isLoading: tasksLoading } = useTasksStore();
   const { groups, fetchGroups } = useGroupsStore();
   const { items: wishlistItems, fetchUserWishlistItems } = useWishlistStore();
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [isAddWishlistModalOpen, setIsAddWishlistModalOpen] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
 
   useEffect(() => {
@@ -227,7 +231,11 @@ export function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <h3 className="text-lg font-medium">Wishlist Items</h3>
-              <Button size="sm" variant="outline">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setIsAddWishlistModalOpen(true)}
+              >
                 <Plus className="h-4 w-4 mr-1" />
                 Add Item
               </Button>
@@ -254,7 +262,12 @@ export function Dashboard() {
                   ))
                 )}
                 {wishlistItems.length > 3 && (
-                  <Button variant="outline" className="w-full" size="sm">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    size="sm"
+                    onClick={() => navigate('/wishlist')}
+                  >
                     <ArrowRight className="h-4 w-4 mr-1" />
                     View all wishlist items
                   </Button>
@@ -310,6 +323,11 @@ export function Dashboard() {
       <CreateTaskModal
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
+      />
+
+      <AddWishlistModal
+        isOpen={isAddWishlistModalOpen}
+        onClose={() => setIsAddWishlistModalOpen(false)}
       />
     </div>
   );

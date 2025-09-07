@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Heart, Filter } from 'lucide-react';
 import { Button, WishlistItemSkeleton } from '../components/ui';
-import { WishlistItem, AddWishlistModal } from '../components/wishlist';
+import { WishlistItem, AddWishlistModal, EditWishlistModal } from '../components/wishlist';
 import { useWishlistStore } from '../stores/wishlistStore';
 import { useAuthStore } from '../stores/authStore';
 import { useGroupsStore } from '../stores/groupsStore';
@@ -11,6 +11,8 @@ type StatusFilter = 'all' | 'available' | 'purchased' | 'gifted';
 
 export function Wishlist() {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<WishlistItemType | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showFilters, setShowFilters] = useState(false);
   
@@ -26,8 +28,8 @@ export function Wishlist() {
   }, [user, fetchUserWishlistItems, fetchGroups]);
 
   const handleEditItem = (item: WishlistItemType) => {
-    console.log('Edit wishlist item:', item);
-    // TODO: Implement edit wishlist item functionality
+    setEditingItem(item);
+    setShowEditModal(true);
   };
 
   const handleDeleteItem = async (itemId: string) => {
@@ -219,6 +221,15 @@ export function Wishlist() {
       <AddWishlistModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
+      />
+
+      <EditWishlistModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingItem(null);
+        }}
+        item={editingItem}
       />
     </div>
   );
