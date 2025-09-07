@@ -9,6 +9,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useTasksStore } from '../stores/tasksStore';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useWishlistStore } from '../stores/wishlistStore';
+import { calculateUserWeeklyPoints, calculateUserMonthlyPoints } from '../utils/pointsCalculations';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -49,6 +50,10 @@ export function Dashboard() {
 
   // Get user's total points
   const totalPoints = user?.totalPoints || 0;
+
+  // Calculate weekly and monthly points
+  const weeklyPoints = user ? calculateUserWeeklyPoints(tasks, user.id) : 0;
+  const monthlyPoints = user ? calculateUserMonthlyPoints(tasks, user.id) : 0;
 
   // Get recent wishlist items
   const recentWishlistItems = wishlistItems.slice(0, 3);
@@ -188,8 +193,8 @@ export function Dashboard() {
           <PointsDisplay
             currentPoints={totalPoints}
             totalEarned={totalPoints}
-            monthlyPoints={0} // TODO: Calculate monthly points
-            weeklyPoints={0}  // TODO: Calculate weekly points
+            monthlyPoints={monthlyPoints}
+            weeklyPoints={weeklyPoints}
             transactions={[]} // TODO: Add transaction history
             className="lg:hidden" // Show on mobile, hide on desktop
           />
@@ -281,8 +286,8 @@ export function Dashboard() {
             <PointsDisplay
               currentPoints={totalPoints}
               totalEarned={totalPoints}
-              monthlyPoints={0} // TODO: Calculate monthly points
-              weeklyPoints={0}  // TODO: Calculate weekly points
+              monthlyPoints={monthlyPoints}
+              weeklyPoints={weeklyPoints}
               transactions={[]} // TODO: Add transaction history
             />
           </div>

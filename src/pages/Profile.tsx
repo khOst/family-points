@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useTasksStore } from '../stores/tasksStore';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useWishlistStore } from '../stores/wishlistStore';
+import { calculateUserWeeklyPoints, calculateUserMonthlyPoints } from '../utils/pointsCalculations';
 
 export function Profile() {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -43,6 +44,10 @@ export function Profile() {
 
   const totalPoints = user.totalPoints || 0;
   const accountAge = Math.ceil((Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Calculate weekly and monthly points
+  const weeklyPoints = user ? calculateUserWeeklyPoints(tasks, user.id) : 0;
+  const monthlyPoints = user ? calculateUserMonthlyPoints(tasks, user.id) : 0;
   
   // Calculate weekly average
   const weeklyAverage = accountAge >= 7 ? Math.round(totalPoints / (accountAge / 7)) : totalPoints;
@@ -242,8 +247,8 @@ export function Profile() {
       <PointsDisplay
         currentPoints={totalPoints}
         totalEarned={totalPoints}
-        monthlyPoints={0} // TODO: Calculate from transactions
-        weeklyPoints={0}  // TODO: Calculate from transactions
+        monthlyPoints={monthlyPoints}
+        weeklyPoints={weeklyPoints}
         transactions={[]} // TODO: Add transaction history
         className="mt-8"
       />
