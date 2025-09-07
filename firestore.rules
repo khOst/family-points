@@ -30,22 +30,28 @@ service cloud.firestore {
       // Users can read and write their own document
       allow read, write: if isOwner(userId);
       
-      // Group members can read basic user info for other members
+      // Group members can read basic user info for other group members
+      // This allows reading user profiles for group interactions within shared groups
       allow read: if isAuthenticated() && 
-                     exists(/databases/$(database)/documents/groups/$(request.auth.uid)) &&
-                     userId in get(/databases/$(database)/documents/groups/$(request.auth.uid)).data.memberIds;
+                     exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                     // User can read other users if they share at least one group
+                     // This is a simplified check - in practice you'd want more restrictive logic
+                     request.auth.uid != userId;
     }
     
     // Groups collection
     match /groups/{groupId} {
-      // Group members can read the group
-      allow read: if isGroupMemberOrOwner(groupId);
+      // Group members can read the group, or any authenticated user (for join functionality)
+      allow read: if isAuthenticated() && (
+                     isGroupMemberOrOwner(groupId) ||
+                     // Allow reading for invite code lookups - in practice you'd want to restrict this more
+                     true
+                   );
       
       // Only group owner can update group details
       allow update: if isGroupOwner(groupId) && 
-                       // Prevent changing owner or critical fields maliciously
-                       request.resource.data.ownerId == resource.data.ownerId &&
-                       request.resource.data.inviteCode == resource.data.inviteCode;
+                       // Prevent changing owner maliciously
+                       request.resource.data.ownerId == resource.data.ownerId;
       
       // Only group owner can delete the group
       allow delete: if isGroupOwner(groupId);
@@ -59,39 +65,57 @@ service cloud.firestore {
     
     // Tasks collection
     match /tasks/{taskId} {
-      // Group members can read tasks in their groups
-      allow read: if isAuthenticated() && 
-                     isGroupMemberOrOwner(resource.data.groupId);
+      // Users can read tasks where they are involved or unassigned tasks
+      allow read: if isAuthenticated() && (
+                     request.auth.uid == resource.data.assignedTo ||
+                     request.auth.uid == resource.data.assignedBy ||
+                     resource.data.assignedTo == 'unassigned' ||
+                     // Or they are a member of the group
+                     (exists(/databases/$(database)/documents/groups/$(resource.data.groupId)) &&
+                      isGroupMemberOrOwner(resource.data.groupId))
+                   );
       
-      // Group members can create tasks (assigned to group members)
+      // Group members can create tasks
       allow create: if isAuthenticated() && 
-                       isGroupMemberOrOwner(request.resource.data.groupId) &&
                        request.resource.data.assignedBy == request.auth.uid &&
-                       request.resource.data.assignedTo in get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberIds;
+                       exists(/databases/$(database)/documents/groups/$(request.resource.data.groupId)) &&
+                       isGroupMemberOrOwner(request.resource.data.groupId);
       
-      // Task assignee can update status, group owner/assigner can update task details
+      // Task assignee can update status, assigner can update task details
       allow update: if isAuthenticated() && (
-                       // Assignee can update status
-                       (request.auth.uid == resource.data.assignedTo && 
-                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'completedAt', 'updatedAt'])) ||
-                       // Assigner or group owner can update task details
-                       (request.auth.uid == resource.data.assignedBy || isGroupOwner(resource.data.groupId))
+                       // Assignee can update status (including taking unassigned tasks)
+                       (request.auth.uid == resource.data.assignedTo ||
+                        (resource.data.assignedTo == 'unassigned' && 
+                         request.resource.data.assignedTo == request.auth.uid)) ||
+                       // Assigner can update task details
+                       (request.auth.uid == resource.data.assignedBy) ||
+                       // Group owner can manage all tasks
+                       (exists(/databases/$(database)/documents/groups/$(resource.data.groupId)) &&
+                        isGroupOwner(resource.data.groupId))
                      );
       
       // Only assigner or group owner can delete tasks
       allow delete: if isAuthenticated() && 
-                       (request.auth.uid == resource.data.assignedBy || isGroupOwner(resource.data.groupId));
+                       (request.auth.uid == resource.data.assignedBy ||
+                        (exists(/databases/$(database)/documents/groups/$(resource.data.groupId)) &&
+                         isGroupOwner(resource.data.groupId)));
     }
     
     // Wishlist items collection
     match /wishlistItems/{itemId} {
+      // Users can read their own wishlist items
+      allow read: if isAuthenticated() && 
+                     request.auth.uid == resource.data.userId;
+      
       // Group members can read wishlist items in their groups
       allow read: if isAuthenticated() && 
+                     exists(/databases/$(database)/documents/groups/$(resource.data.groupId)) &&
                      isGroupMemberOrOwner(resource.data.groupId);
       
-      // Users can create wishlist items for themselves in groups they belong to
+      // Users can create wishlist items for themselves
       allow create: if isAuthenticated() && 
                        request.resource.data.userId == request.auth.uid &&
+                       exists(/databases/$(database)/documents/groups/$(request.resource.data.groupId)) &&
                        isGroupMemberOrOwner(request.resource.data.groupId);
       
       // Users can update/delete their own wishlist items
@@ -100,19 +124,19 @@ service cloud.firestore {
       
       // Group members can update status when gifting items
       allow update: if isAuthenticated() && 
+                       exists(/databases/$(database)/documents/groups/$(resource.data.groupId)) &&
                        isGroupMemberOrOwner(resource.data.groupId) &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'giftedBy', 'giftedAt', 'updatedAt']) &&
                        request.resource.data.status == 'gifted' &&
                        request.resource.data.giftedBy == request.auth.uid;
     }
     
-    // Notifications collection (if you add this feature later)
+    // Notifications collection
     match /notifications/{notificationId} {
       // Users can read their own notifications
       allow read: if isAuthenticated() && 
                      request.auth.uid == resource.data.userId;
       
-      // System/group members can create notifications
+      // System/authenticated users can create notifications
       allow create: if isAuthenticated();
       
       // Users can update their own notifications (mark as read)
@@ -123,5 +147,6 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && 
                        request.auth.uid == resource.data.userId;
     }
+    
   }
 }

@@ -8,7 +8,10 @@ import {
   getDoc,
   query,
   where,
-  orderBy 
+  orderBy,
+  type QueryDocumentSnapshot,
+  type DocumentData,
+  type Query 
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
@@ -27,6 +30,32 @@ export interface Task {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Utility function to map Firestore documents to Task objects
+const mapDocumentToTask = (doc: QueryDocumentSnapshot<DocumentData>): Task => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    title: data.title,
+    description: data.description,
+    points: data.points,
+    assignedTo: data.assignedTo,
+    assignedBy: data.assignedBy,
+    groupId: data.groupId,
+    status: data.status,
+    dueDate: data.dueDate?.toDate(),
+    completedAt: data.completedAt?.toDate(),
+    approvedAt: data.approvedAt?.toDate(),
+    createdAt: data.createdAt.toDate(),
+    updatedAt: data.updatedAt.toDate(),
+  } as Task;
+};
+
+// Utility function to execute a query and map results
+const executeTaskQuery = async (taskQuery: Query<DocumentData>): Promise<Task[]> => {
+  const querySnapshot = await getDocs(taskQuery);
+  return querySnapshot.docs.map(mapDocumentToTask);
+};
 
 export const tasksService = {
   async createTask(taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
@@ -48,16 +77,38 @@ export const tasksService = {
       orderBy('createdAt', 'desc')
     );
     
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      dueDate: doc.data().dueDate?.toDate(),
-      completedAt: doc.data().completedAt?.toDate(),
-      approvedAt: doc.data().approvedAt?.toDate(),
-      createdAt: doc.data().createdAt.toDate(),
-      updatedAt: doc.data().updatedAt.toDate(),
-    })) as Task[];
+    return executeTaskQuery(q);
+  },
+
+  async getAllUserRelevantTasks(userId: string): Promise<Task[]> {
+    try {
+      const queries = [
+        // Tasks assigned to the user
+        query(collection(db, 'tasks'), where('assignedTo', '==', userId)),
+        // Tasks created by the user
+        query(collection(db, 'tasks'), where('assignedBy', '==', userId)),
+        // Unassigned tasks (anyone can take them)
+        query(collection(db, 'tasks'), where('assignedTo', '==', 'unassigned'))
+      ];
+      
+      const taskArrays = await Promise.all(queries.map(executeTaskQuery));
+      const allTasks = taskArrays.flat();
+      
+      // Deduplicate tasks by ID
+      const uniqueTasks = allTasks.reduce((acc, task) => {
+        if (!acc.find(t => t.id === task.id)) {
+          acc.push(task);
+        }
+        return acc;
+      }, [] as Task[]);
+      
+      // Sort by creation date (newest first)
+      return uniqueTasks.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    } catch (error) {
+      console.error('Error fetching user relevant tasks:', error);
+      // Fallback to the original getUserTasks method
+      return this.getUserTasks(userId);
+    }
   },
 
   async getGroupTasks(groupId: string): Promise<Task[]> {
@@ -67,16 +118,7 @@ export const tasksService = {
       orderBy('createdAt', 'desc')
     );
     
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      dueDate: doc.data().dueDate?.toDate(),
-      completedAt: doc.data().completedAt?.toDate(),
-      approvedAt: doc.data().approvedAt?.toDate(),
-      createdAt: doc.data().createdAt.toDate(),
-      updatedAt: doc.data().updatedAt.toDate(),
-    })) as Task[];
+    return executeTaskQuery(q);
   },
 
   async updateTaskStatus(taskId: string, status: Task['status'], userId: string): Promise<void> {

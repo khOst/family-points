@@ -1,167 +1,225 @@
-import { useState } from 'react';
-import { Plus, ExternalLink, Star } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, Modal, Input } from '../components/ui';
+import { useState, useEffect } from 'react';
+import { Plus, Heart, Filter } from 'lucide-react';
+import { Button, WishlistItemSkeleton } from '../components/ui';
+import { WishlistItem, AddWishlistModal } from '../components/wishlist';
+import { useWishlistStore } from '../stores/wishlistStore';
+import { useAuthStore } from '../stores/authStore';
+import { useGroupsStore } from '../stores/groupsStore';
+import type { WishlistItem as WishlistItemType } from '../services/wishlistService';
+
+type StatusFilter = 'all' | 'available' | 'purchased' | 'gifted';
 
 export function Wishlist() {
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  const { user } = useAuthStore();
+  const { items, isLoading, fetchUserWishlistItems, updateWishlistItem, deleteWishlistItem } = useWishlistStore();
+  const { fetchGroups } = useGroupsStore();
 
-  const wishlistItems = [
-    {
-      id: '1',
-      title: 'New Headphones',
-      description: 'Wireless noise-canceling headphones',
-      estimatedPrice: 199,
-      priority: 'high',
-      link: 'https://example.com/headphones',
-    },
-    {
-      id: '2',
-      title: 'Programming Book',
-      description: 'Advanced React patterns and techniques',
-      estimatedPrice: 45,
-      priority: 'medium',
-      link: '',
-    },
-    {
-      id: '3',
-      title: 'Coffee Maker',
-      description: 'Automatic drip coffee maker',
-      estimatedPrice: 129,
-      priority: 'low',
-      link: 'https://example.com/coffee-maker',
-    },
-  ];
+  useEffect(() => {
+    if (user) {
+      fetchUserWishlistItems(user.id);
+      fetchGroups();
+    }
+  }, [user, fetchUserWishlistItems, fetchGroups]);
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'text-red-600';
-      case 'medium':
-        return 'text-yellow-600';
-      case 'low':
-        return 'text-green-600';
-      default:
-        return 'text-gray-600';
+  const handleEditItem = (item: WishlistItemType) => {
+    console.log('Edit wishlist item:', item);
+    // TODO: Implement edit wishlist item functionality
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      await deleteWishlistItem(itemId);
+    } catch (error) {
+      console.error('Failed to delete wishlist item:', error);
     }
   };
 
-  const getPriorityStars = (priority: string) => {
-    const count = priority === 'high' ? 3 : priority === 'medium' ? 2 : 1;
-    return Array.from({ length: count }, (_, i) => (
-      <Star key={i} className={`h-4 w-4 fill-current ${getPriorityColor(priority)}`} />
-    ));
+  const handleGiftItem = async (item: WishlistItemType) => {
+    if (!user) return;
+    
+    try {
+      await updateWishlistItem(item.id, {
+        status: 'gifted',
+        giftedBy: user.id,
+        giftedAt: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to gift item:', error);
+    }
   };
+
+  // Filter items
+  const filteredItems = items.filter(item => {
+    if (statusFilter === 'all') return true;
+    return item.status === statusFilter;
+  });
+
+  const getFilterCount = (status: StatusFilter) => {
+    if (status === 'all') return items.length;
+    return items.filter(item => item.status === status).length;
+  };
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to view your wishlist</h2>
+        <p className="text-gray-600">You need to be authenticated to manage your wishlist.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Wishlist</h1>
-          <p className="text-gray-600">Items you'd like to earn with your points</p>
+          <h1 className="text-2xl font-bold text-gray-900">My Wishlist</h1>
+          <p className="text-gray-600">Items you'd like to receive as rewards for your hard work</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
+        <Button onClick={() => setShowAddModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Item
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {wishlistItems.map((item) => (
-          <Card key={item.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <h3 className="text-lg font-medium">{item.title}</h3>
-                <div className="flex">
-                  {getPriorityStars(item.priority)}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-3">{item.description}</p>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Price</span>
-                  <span className="text-lg font-semibold">${item.estimatedPrice}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">Priority</span>
-                  <span className={`text-sm font-medium capitalize ${getPriorityColor(item.priority)}`}>
-                    {item.priority}
-                  </span>
-                </div>
-                <div className="flex space-x-2">
-                  {item.link && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(item.link, '_blank')}
-                      className="flex-1"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Edit
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+        <Button
+          variant="outline"
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-2"
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+          {statusFilter !== 'all' && (
+            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">
+              Active
+            </span>
+          )}
+        </Button>
+
+        {showFilters && (
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'available', 'purchased', 'gifted'] as StatusFilter[]).map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                  statusFilter === status
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border'
+                }`}
+              >
+                {status === 'all' ? 'All Items' : 
+                 status.charAt(0).toUpperCase() + status.slice(1)}
+                <span className="ml-1 text-xs opacity-75">
+                  ({getFilterCount(status)})
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Add Wishlist Item"
-      >
-        <form className="space-y-4">
-          <Input
-            label="Item Title"
-            placeholder="Enter item name"
-            required
-          />
-          <Input
-            label="Description"
-            placeholder="Enter item description"
-          />
-          <Input
-            type="number"
-            label="Estimated Price"
-            placeholder="Enter estimated price"
-            min="0"
-            step="0.01"
-            required
-          />
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Priority</label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
+      {/* Results Summary */}
+      <div className="text-sm text-gray-600">
+        Showing {filteredItems.length} of {items.length} items
+      </div>
+
+      {/* Wishlist Items */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <WishlistItemSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredItems.length === 0 ? (
+        <div className="text-center py-12">
+          {items.length === 0 ? (
+            <div className="max-w-md mx-auto">
+              <div className="mx-auto w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mb-4">
+                <Heart className="h-8 w-8 text-pink-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Your wishlist is empty</h3>
+              <p className="text-gray-600 mb-6">
+                Add items you'd love to receive as rewards for completing tasks and earning points!
+              </p>
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Item
+              </Button>
+            </div>
+          ) : (
+            <div className="max-w-md mx-auto">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No items match your filters</h3>
+              <p className="text-gray-600 mb-4">Try adjusting your filter criteria.</p>
+              <Button
+                variant="outline"
+                onClick={() => setStatusFilter('all')}
+              >
+                Show All Items
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredItems.map((item) => (
+            <WishlistItem
+              key={item.id}
+              item={item}
+              onEdit={handleEditItem}
+              onDelete={handleDeleteItem}
+              onGift={handleGiftItem}
+              showGiftOption={false} // Don't show gift option on own wishlist
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Statistics */}
+      {items.length > 0 && (
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Wishlist Statistics</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">
+                {items.filter(item => item.status === 'available').length}
+              </div>
+              <div className="text-sm text-gray-600">Available</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {items.filter(item => item.status === 'gifted').length}
+              </div>
+              <div className="text-sm text-gray-600">Gifted</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">
+                ${items.reduce((sum, item) => sum + item.cost, 0).toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-600">Total Value</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                ${items
+                  .filter(item => item.status === 'available')
+                  .reduce((sum, item) => sum + item.cost, 0)
+                  .toFixed(2)}
+              </div>
+              <div className="text-sm text-gray-600">Available Value</div>
+            </div>
           </div>
-          <Input
-            type="url"
-            label="Link (optional)"
-            placeholder="Enter product link"
-          />
-          <div className="flex space-x-3">
-            <Button type="submit" className="flex-1">
-              Add Item
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateModal(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        </div>
+      )}
+
+      <AddWishlistModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+      />
     </div>
   );
 }

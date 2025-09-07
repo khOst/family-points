@@ -10,7 +10,7 @@ import { Wishlist } from './pages/Wishlist';
 import { Notifications } from './pages/Notifications';
 import { Profile } from './pages/Profile';
 import { useAuthStore } from './stores/authStore';
-import { LoadingState } from './components/ui';
+import { LoadingState, ErrorBoundary } from './components/ui';
 
 function App() {
   const { isAuthenticated, isLoading, initializeAuth } = useAuthStore();
@@ -28,29 +28,31 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        {!isAuthenticated ? (
-          <>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </>
-        ) : (
-          <>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="groups" element={<Groups />} />
-              <Route path="tasks" element={<Tasks />} />
-              <Route path="wishlist" element={<Wishlist />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="profile" element={<Profile />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </>
-        )}
-      </Routes>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          {!isAuthenticated ? (
+            <>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </>
+          ) : (
+            <>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="groups" element={<Groups />} />
+                <Route path="tasks" element={<Tasks />} />
+                <Route path="wishlist" element={<Wishlist />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          )}
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

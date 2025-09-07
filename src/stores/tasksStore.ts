@@ -32,7 +32,8 @@ export const useTasksStore = create<TasksStore>((set, get) => ({
       if (groupId) {
         tasks = await tasksService.getGroupTasks(groupId);
       } else {
-        tasks = await tasksService.getUserTasks(user.id);
+        // Get all tasks relevant to the user (assigned to them, created by them, or unassigned)
+        tasks = await tasksService.getAllUserRelevantTasks(user.id);
       }
       
       set({ tasks, isLoading: false });

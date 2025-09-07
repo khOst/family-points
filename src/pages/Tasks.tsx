@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-import { Button } from '../components/ui';
-import { TaskList, CreateTaskModal } from '../components/tasks';
+import { Button, TaskSkeleton } from '../components/ui';
+import { TaskList, CreateTaskModal, EditTaskModal } from '../components/tasks';
 import { useTasksStore } from '../stores/tasksStore';
 import { useAuthStore } from '../stores/authStore';
 import type { Task } from '../services/tasksService';
 
 export function Tasks() {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const { tasks, isLoading, fetchTasks, deleteTask } = useTasksStore();
   const { user } = useAuthStore();
 
@@ -18,8 +20,8 @@ export function Tasks() {
   }, [user, fetchTasks]);
 
   const handleEditTask = (task: Task) => {
-    console.log('Edit task:', task);
-    // TODO: Implement edit task functionality
+    setEditingTask(task);
+    setShowEditModal(true);
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -55,9 +57,10 @@ export function Tasks() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="text-gray-600 mt-2">Loading tasks...</p>
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <TaskSkeleton key={i} />
+          ))}
         </div>
       ) : (
         <TaskList
@@ -71,6 +74,15 @@ export function Tasks() {
       <CreateTaskModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+      />
+
+      <EditTaskModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingTask(null);
+        }}
+        task={editingTask}
       />
     </div>
   );
