@@ -19,25 +19,11 @@ function App() {
     initializeAuth();
   }, [initializeAuth]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-25 flex items-center justify-center">
-        <LoadingState message="Loading Family Points..." size="lg" />
-      </div>
-    );
-  }
-
   return (
     <ErrorBoundary>
       <Router>
         <Routes>
-          {!isAuthenticated ? (
-            <>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            </>
-          ) : (
+          {isAuthenticated ? (
             <>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Dashboard />} />
@@ -48,6 +34,18 @@ function App() {
                 <Route path="profile" element={<Profile />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          ) : isLoading ? (
+            <Route path="*" element={
+              <div className="min-h-screen bg-gray-25 flex items-center justify-center">
+                <LoadingState message="Loading Family Points..." size="lg" />
+              </div>
+            } />
+          ) : (
+            <>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </>
           )}
         </Routes>
