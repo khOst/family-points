@@ -171,6 +171,15 @@ export const tasksService = {
         await updateDoc(userRef, {
           totalPoints: currentPoints + taskData.points,
         });
+
+        // Create transaction record
+        const { transactionService } = await import('./transactionService');
+        await transactionService.createTaskEarnedTransaction(
+          taskId,
+          userId,
+          taskData.points,
+          taskData.assignedBy // The user who approved the task
+        );
       }
     }
   },

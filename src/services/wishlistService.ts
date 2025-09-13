@@ -5,6 +5,7 @@ import {
   updateDoc, 
   deleteDoc, 
   getDocs, 
+  getDoc,
   query,
   where,
   orderBy 
@@ -76,16 +77,48 @@ export const wishlistService = {
     })) as WishlistItem[];
   },
 
-  async purchaseItem(itemId: string): Promise<void> {
+  async purchaseItem(itemId: string, userId: string): Promise<void> {
+    // Get the wishlist item details
+    const itemDoc = await getDoc(doc(db, 'wishlistItems', itemId));
+    if (!itemDoc.exists()) {
+      throw new Error('Wishlist item not found');
+    }
+
+    const itemData = itemDoc.data();
+    const cost = itemData.cost;
+
+    // Get user's current points
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (!userDoc.exists()) {
+      throw new Error('User not found');
+    }
+
+    const currentPoints = userDoc.data().totalPoints || 0;
+    if (currentPoints < cost) {
+      throw new Error('Insufficient points');
+    }
+
+    // Update the wishlist item status
     await updateDoc(doc(db, 'wishlistItems', itemId), {
       status: 'purchased',
       purchasedAt: new Date(),
       updatedAt: new Date(),
     });
-    
-    // TODO: Deduct points from user
-    // This would need to fetch current points and subtract cost
-    // Implementation depends on how we handle transactions
+
+    // Deduct points from user
+    await updateDoc(doc(db, 'users', userId), {
+      totalPoints: currentPoints - cost,
+    });
+
+    // Create transaction record
+    const { transactionService } = await import('./transactionService');
+    await transactionService.createWishlistSpentTransaction(
+      userId,
+      itemData.groupId,
+      itemId,
+      itemData.title,
+      cost
+    );
   },
 
   async giftItem(itemId: string, giftedBy: string): Promise<void> {

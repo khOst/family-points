@@ -138,6 +138,11 @@ service cloud.firestore {
                        isGroupMemberOrOwner(resource.data.groupId) &&
                        request.resource.data.status == 'gifted' &&
                        request.resource.data.giftedBy == request.auth.uid;
+                       
+      // Users can update their own wishlist items to 'purchased' status
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == resource.data.userId &&
+                       request.resource.data.status == 'purchased';
     }
     
     // Notifications collection
@@ -156,6 +161,24 @@ service cloud.firestore {
       // Users can delete their own notifications
       allow delete: if isAuthenticated() && 
                        request.auth.uid == resource.data.userId;
+    }
+    
+    // Transactions collection
+    match /transactions/{transactionId} {
+      // Users can read their own transactions
+      allow read: if isAuthenticated() && 
+                     request.auth.uid == resource.data.userId;
+      
+      // Group members can read transactions from their groups
+      allow read: if isAuthenticated() && 
+                     exists(/databases/$(database)/documents/groups/$(resource.data.groupId)) &&
+                     isGroupMemberOrOwner(resource.data.groupId);
+      
+      // System/authenticated users can create transactions
+      // (This allows the app to create transactions when tasks are approved or items purchased)
+      allow create: if isAuthenticated();
+      
+      // Only allow reading and creating transactions, no updates or deletes for data integrity
     }
     
   }

@@ -9,7 +9,9 @@ import { useAuthStore } from '../stores/authStore';
 import { useTasksStore } from '../stores/tasksStore';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useWishlistStore } from '../stores/wishlistStore';
+import { useTransactionStore } from '../stores/transactionStore';
 import { calculateUserWeeklyPoints, calculateUserMonthlyPoints } from '../utils/pointsCalculations';
+import { transformTransactionsForDisplay } from '../utils/transactionUtils';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export function Dashboard() {
   const { tasks, fetchTasks, isLoading: tasksLoading } = useTasksStore();
   const { groups, fetchGroups } = useGroupsStore();
   const { items: wishlistItems, fetchUserWishlistItems } = useWishlistStore();
+  const { transactions, fetchUserTransactions } = useTransactionStore();
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
   const [isAddWishlistModalOpen, setIsAddWishlistModalOpen] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
@@ -26,8 +29,9 @@ export function Dashboard() {
       fetchTasks();
       fetchGroups();
       fetchUserWishlistItems(user.id);
+      fetchUserTransactions(user.id, true);
     }
-  }, [user, fetchTasks, fetchGroups, fetchUserWishlistItems]);
+  }, [user, fetchTasks, fetchGroups, fetchUserWishlistItems, fetchUserTransactions]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -195,7 +199,7 @@ export function Dashboard() {
             totalEarned={totalPoints}
             monthlyPoints={monthlyPoints}
             weeklyPoints={weeklyPoints}
-            transactions={[]} // TODO: Add transaction history
+            transactions={transformTransactionsForDisplay(transactions)}
             className="lg:hidden" // Show on mobile, hide on desktop
           />
         </div>
@@ -288,7 +292,7 @@ export function Dashboard() {
               totalEarned={totalPoints}
               monthlyPoints={monthlyPoints}
               weeklyPoints={weeklyPoints}
-              transactions={[]} // TODO: Add transaction history
+              transactions={transformTransactionsForDisplay(transactions)}
             />
           </div>
         </div>

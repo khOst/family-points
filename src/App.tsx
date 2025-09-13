@@ -9,6 +9,7 @@ import { Tasks } from './pages/Tasks';
 import { Wishlist } from './pages/Wishlist';
 import { Notifications } from './pages/Notifications';
 import { Profile } from './pages/Profile';
+import { TransactionHistory } from './pages/TransactionHistory';
 import { useAuthStore } from './stores/authStore';
 import { LoadingState, ErrorBoundary } from './components/ui';
 
@@ -32,6 +33,7 @@ function App() {
                 <Route path="wishlist" element={<Wishlist />} />
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="transactions" element={<TransactionHistory />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </>

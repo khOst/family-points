@@ -6,7 +6,9 @@ import { useAuthStore } from '../stores/authStore';
 import { useTasksStore } from '../stores/tasksStore';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useWishlistStore } from '../stores/wishlistStore';
+import { useTransactionStore } from '../stores/transactionStore';
 import { calculateUserWeeklyPoints, calculateUserMonthlyPoints } from '../utils/pointsCalculations';
+import { transformTransactionsForDisplay } from '../utils/transactionUtils';
 
 export function Profile() {
   const [showEditModal, setShowEditModal] = useState(false);
@@ -14,14 +16,16 @@ export function Profile() {
   const { tasks, fetchTasks } = useTasksStore();
   const { groups, fetchGroups } = useGroupsStore();
   const { items: wishlistItems, fetchUserWishlistItems } = useWishlistStore();
+  const { transactions, fetchUserTransactions } = useTransactionStore();
 
   useEffect(() => {
     if (user) {
       fetchTasks();
       fetchGroups();
       fetchUserWishlistItems(user.id);
+      fetchUserTransactions(user.id, true);
     }
-  }, [user, fetchTasks, fetchGroups, fetchUserWishlistItems]);
+  }, [user, fetchTasks, fetchGroups, fetchUserWishlistItems, fetchUserTransactions]);
 
   if (!user) {
     return (
@@ -249,7 +253,7 @@ export function Profile() {
         totalEarned={totalPoints}
         monthlyPoints={monthlyPoints}
         weeklyPoints={weeklyPoints}
-        transactions={[]} // TODO: Add transaction history
+        transactions={transformTransactionsForDisplay(transactions)}
         className="mt-8"
       />
 

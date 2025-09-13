@@ -11,6 +11,7 @@ interface WishlistStore {
   addWishlistItem: (itemData: Omit<WishlistItem, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateWishlistItem: (itemId: string, updates: Partial<WishlistItem>) => Promise<void>;
   deleteWishlistItem: (itemId: string) => Promise<void>;
+  purchaseWishlistItem: (itemId: string) => Promise<void>;
 }
 
 export const useWishlistStore = create<WishlistStore>((set, get) => ({
@@ -86,6 +87,28 @@ export const useWishlistStore = create<WishlistStore>((set, get) => ({
       if (user) {
         await get().fetchUserWishlistItems(user.id);
       }
+    } catch (error) {
+      set({ isLoading: false });
+      throw error;
+    }
+  },
+
+  purchaseWishlistItem: async (itemId: string) => {
+    set({ isLoading: true });
+    
+    try {
+      const user = useAuthStore.getState().user;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      await wishlistService.purchaseItem(itemId, user.id);
+      
+      // Refresh both the wishlist and user data to update points
+      await get().fetchUserWishlistItems(user.id);
+      
+      // Refresh user data to update points balance
+      await useAuthStore.getState().refreshUser();
     } catch (error) {
       set({ isLoading: false });
       throw error;

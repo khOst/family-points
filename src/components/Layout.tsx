@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Users, CheckSquare, Heart, User, LogOut } from 'lucide-react';
+import { Home, Users, CheckSquare, Heart, User, LogOut, History } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useAuthStore } from '../stores/authStore';
 
@@ -75,6 +75,14 @@ export function Layout() {
                   >
                     <User className="h-4 w-4 mr-3" />
                     Profile
+                  </Link>
+                  <Link
+                    to="/transactions"
+                    className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl mx-2 transition-colors"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <History className="h-4 w-4 mr-3" />
+                    Transaction History
                   </Link>
                   <hr className="my-2 border-gray-100" />
                   <button

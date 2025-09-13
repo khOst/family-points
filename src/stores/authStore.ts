@@ -32,6 +32,7 @@ interface AuthStore extends AuthState {
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   initializeAuth: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -168,5 +169,30 @@ export const useAuthStore = create<AuthStore>((set) => ({
         });
       }
     });
+  },
+
+  refreshUser: async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const user: User = {
+          id: currentUser.uid,
+          email: currentUser.email!,
+          name: userData.name,
+          avatar: userData.avatar,
+          dateOfBirth: userData.dateOfBirth.toDate(),
+          totalPoints: userData.totalPoints || 0,
+          createdAt: userData.createdAt.toDate(),
+        };
+        
+        set({ user, isAuthenticated: true });
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+    }
   },
 }));

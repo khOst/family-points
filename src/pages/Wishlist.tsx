@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Heart, Filter } from 'lucide-react';
 import { Button, WishlistItemSkeleton } from '../components/ui';
-import { WishlistItem, AddWishlistModal, EditWishlistModal } from '../components/wishlist';
+import { WishlistItem, AddWishlistModal, EditWishlistModal, PurchaseModal } from '../components/wishlist';
 import { useWishlistStore } from '../stores/wishlistStore';
 import { useAuthStore } from '../stores/authStore';
 import { useGroupsStore } from '../stores/groupsStore';
@@ -12,12 +12,14 @@ type StatusFilter = 'all' | 'available' | 'purchased' | 'gifted';
 export function Wishlist() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [editingItem, setEditingItem] = useState<WishlistItemType | null>(null);
+  const [purchasingItem, setPurchasingItem] = useState<WishlistItemType | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showFilters, setShowFilters] = useState(false);
   
   const { user } = useAuthStore();
-  const { items, isLoading, fetchUserWishlistItems, updateWishlistItem, deleteWishlistItem } = useWishlistStore();
+  const { items, isLoading, fetchUserWishlistItems, updateWishlistItem, deleteWishlistItem, purchaseWishlistItem } = useWishlistStore();
   const { fetchGroups } = useGroupsStore();
 
   useEffect(() => {
@@ -51,6 +53,20 @@ export function Wishlist() {
       });
     } catch (error) {
       console.error('Failed to gift item:', error);
+    }
+  };
+
+  const handlePurchaseItem = (item: WishlistItemType) => {
+    setPurchasingItem(item);
+    setShowPurchaseModal(true);
+  };
+
+  const handlePurchaseConfirm = async (item: WishlistItemType) => {
+    try {
+      await purchaseWishlistItem(item.id);
+    } catch (error) {
+      console.error('Failed to purchase item:', error);
+      throw error; // Re-throw to let the modal handle the error
     }
   };
 
@@ -176,6 +192,7 @@ export function Wishlist() {
               onEdit={handleEditItem}
               onDelete={handleDeleteItem}
               onGift={handleGiftItem}
+              onPurchase={handlePurchaseItem}
               showGiftOption={false} // Don't show gift option on own wishlist
             />
           ))}
@@ -230,6 +247,16 @@ export function Wishlist() {
           setEditingItem(null);
         }}
         item={editingItem}
+      />
+
+      <PurchaseModal
+        isOpen={showPurchaseModal}
+        onClose={() => {
+          setShowPurchaseModal(false);
+          setPurchasingItem(null);
+        }}
+        item={purchasingItem}
+        onPurchase={handlePurchaseConfirm}
       />
     </div>
   );

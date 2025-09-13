@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, Edit3, Trash2, Gift, Calendar, Star, CheckCircle } from 'lucide-react';
+import { ExternalLink, Edit3, Trash2, Gift, Calendar, Star, CheckCircle, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, Button } from '../ui';
 import { cn } from '../../utils/cn';
 import { useAuthStore } from '../../stores/authStore';
@@ -10,6 +10,7 @@ interface WishlistItemProps {
   onEdit?: (item: WishlistItemType) => void;
   onDelete?: (itemId: string) => void;
   onGift?: (item: WishlistItemType) => void;
+  onPurchase?: (item: WishlistItemType) => void;
   showGiftOption?: boolean;
   className?: string;
 }
@@ -19,6 +20,7 @@ export function WishlistItem({
   onEdit, 
   onDelete, 
   onGift,
+  onPurchase,
   showGiftOption = true,
   className 
 }: WishlistItemProps) {
@@ -29,6 +31,8 @@ export function WishlistItem({
   const canEdit = isOwner && item.status === 'available';
   const canDelete = isOwner;
   const canGift = !isOwner && item.status === 'available' && showGiftOption;
+  const canPurchase = isOwner && item.status === 'available' && item.cost > 0;
+  const canAfford = user ? (user.totalPoints || 0) >= item.cost : false;
 
   const getStatusIcon = () => {
     switch (item.status) {
@@ -165,6 +169,24 @@ export function WishlistItem({
           
           {/* Action Buttons */}
           <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+            {canPurchase && onPurchase && (
+              <Button
+                onClick={() => onPurchase(item)}
+                size="sm"
+                disabled={!canAfford}
+                className={cn(
+                  "flex items-center gap-2",
+                  canAfford 
+                    ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                )}
+                title={!canAfford ? `Need ${item.cost - (user?.totalPoints || 0)} more points` : undefined}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                {canAfford ? 'Purchase' : 'Insufficient Points'}
+              </Button>
+            )}
+            
             {canGift && onGift && (
               <Button
                 onClick={() => onGift(item)}
