@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShoppingCart, AlertTriangle, CheckCircle, Coins } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Coins } from 'lucide-react';
 import { Modal, Button } from '../ui';
 import { useAuthStore } from '../../stores/authStore';
 import type { WishlistItem } from '../../services/wishlistService';

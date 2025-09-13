@@ -67,6 +67,18 @@ export const tasksService = {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+    
+    // Create notification for task assignment if assigned to a specific user
+    if (taskData.assignedTo && taskData.assignedTo !== 'unassigned') {
+      const { notificationService } = await import('./notificationService');
+      await notificationService.notifyTaskAssigned(
+        taskData.assignedTo,
+        taskData.title,
+        taskData.assignedBy,
+        docRef.id
+      );
+    }
+    
     return docRef.id;
   },
 
@@ -140,6 +152,14 @@ export const tasksService = {
   },
 
   async updateTaskStatus(taskId: string, status: Task['status'], userId: string): Promise<void> {
+    // Get task data for notifications
+    const taskDoc = await getDoc(doc(db, 'tasks', taskId));
+    if (!taskDoc.exists()) {
+      throw new Error('Task not found');
+    }
+    
+    const taskData = taskDoc.data();
+    
     const updates: Record<string, Date | string> = {
       status,
       updatedAt: new Date(),
@@ -153,9 +173,32 @@ export const tasksService = {
 
     await updateDoc(doc(db, 'tasks', taskId), updates);
     
-    // If task is approved, award points to user
-    if (status === 'approved') {
+    // Create notifications based on status change
+    const { notificationService } = await import('./notificationService');
+    
+    if (status === 'completed') {
+      // Notify the task assigner that the task is completed and needs approval
+      await notificationService.createNotification({
+        userId: taskData.assignedBy,
+        type: 'task_completed',
+        title: 'Task Completed',
+        message: `"${taskData.title}" has been completed and is ready for approval`,
+        read: false,
+        createdAt: new Date(),
+        metadata: { taskId, userId }
+      });
+    } else if (status === 'approved') {
+      // Award points to user
       await this.awardPointsForTask(taskId, userId);
+      
+      // Notify the assignee that their task was approved
+      await notificationService.notifyTaskApproved(
+        taskData.assignedTo,
+        taskData.title,
+        taskData.points,
+        userId, // The user who approved it
+        taskId
+      );
     }
   },
 

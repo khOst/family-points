@@ -15,7 +15,6 @@ interface TaskFormFieldsProps {
   setForm: React.Dispatch<React.SetStateAction<TaskForm>>;
   errors: TaskFormErrors;
   groups: Group[];
-  selectedGroup: Group | undefined;
   groupMembers: UserProfile[];
   user: User | null;
   getPointsColor: (points: number) => string;
@@ -29,7 +28,6 @@ export function TaskFormFields({
   setForm,
   errors,
   groups,
-  selectedGroup,
   groupMembers,
   user,
   getPointsColor,

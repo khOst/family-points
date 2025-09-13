@@ -122,12 +122,28 @@ export const wishlistService = {
   },
 
   async giftItem(itemId: string, giftedBy: string): Promise<void> {
+    // Get the wishlist item details for notification
+    const itemDoc = await getDoc(doc(db, 'wishlistItems', itemId));
+    if (!itemDoc.exists()) {
+      throw new Error('Wishlist item not found');
+    }
+
+    const itemData = itemDoc.data();
+
     await updateDoc(doc(db, 'wishlistItems', itemId), {
       status: 'gifted',
       giftedBy,
       giftedAt: new Date(),
       updatedAt: new Date(),
     });
+
+    // Create notification for the gift recipient
+    const { notificationService } = await import('./notificationService');
+    await notificationService.notifyWishlistGifted(
+      itemData.userId,
+      itemData.title,
+      giftedBy
+    );
   },
 
   async updateWishlistItem(itemId: string, updates: Partial<Omit<WishlistItem, 'id' | 'createdAt'>>): Promise<void> {

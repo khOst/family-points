@@ -89,7 +89,7 @@ export const notificationService = {
   },
 
   // Real-time listener for user notifications
-  subscribeToUserNotifications(
+  subscribeToNotifications(
     userId: string, 
     callback: (notifications: Notification[]) => void,
     limitCount = 20

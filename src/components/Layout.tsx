@@ -1,13 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Users, CheckSquare, Heart, User, LogOut, History } from 'lucide-react';
+import { Home, Users, CheckSquare, Heart, User, LogOut, History, Bell } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useAuthStore } from '../stores/authStore';
+import { useNotificationStore } from '../stores/notificationStore';
 
 export function Layout() {
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { logout, user } = useAuthStore();
+  const { unreadCount, subscribeToNotifications } = useNotificationStore();
+
+  // Subscribe to notifications for badge count
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = subscribeToNotifications(user.id);
+      return () => unsubscribe();
+    }
+  }, [user, subscribeToNotifications]);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -53,6 +63,25 @@ export function Layout() {
                   </Link>
                 );
               })}
+              
+              {/* Notifications with badge */}
+              <Link
+                to="/notifications"
+                className={cn(
+                  'inline-flex items-center px-4 py-2 rounded-2xl text-sm font-medium transition-all duration-200 relative',
+                  location.pathname === '/notifications'
+                    ? 'bg-primary-500 text-white shadow-apple'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+                )}
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </Link>
             </div>
 
             <div className="relative">
@@ -126,6 +155,25 @@ export function Layout() {
               </Link>
             );
           })}
+          
+          {/* Mobile Notifications with badge */}
+          <Link
+            to="/notifications"
+            className={cn(
+              'flex flex-col items-center py-3 px-2 rounded-2xl text-xs font-medium transition-all duration-200 min-w-0 flex-1 relative',
+              location.pathname === '/notifications'
+                ? 'bg-primary-500 text-white shadow-apple'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/50'
+            )}
+          >
+            <Bell className="h-5 w-5 mb-1 flex-shrink-0" />
+            <span className="truncate">Alerts</span>
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
     </div>

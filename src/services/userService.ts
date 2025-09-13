@@ -1,4 +1,4 @@
-import { doc, getDoc, getDocs, query, where, collection } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 export interface UserProfile {

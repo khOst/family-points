@@ -1,110 +1,114 @@
-
-import { Bell, CheckCircle, Clock, Users } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { NotificationList } from '../components/notifications';
+import { useAuthStore } from '../stores/authStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import { Card, CardContent } from '../components/ui';
 
 export function Notifications() {
-  const notifications = [
-    {
-      id: '1',
-      type: 'task_assigned',
-      title: 'New task assigned',
-      message: 'You have been assigned the task "Take out trash"',
-      time: '5 minutes ago',
-      read: false,
-      icon: CheckCircle,
-      iconColor: 'text-blue-500',
-    },
-    {
-      id: '2',
-      type: 'task_completed',
-      title: 'Task completed',
-      message: 'Sarah completed "Clean kitchen" and earned 25 points',
-      time: '1 hour ago',
-      read: false,
-      icon: CheckCircle,
-      iconColor: 'text-green-500',
-    },
-    {
-      id: '3',
-      type: 'deadline_reminder',
-      title: 'Deadline reminder',
-      message: 'Task "Vacuum living room" is due tomorrow',
-      time: '3 hours ago',
-      read: true,
-      icon: Clock,
-      iconColor: 'text-yellow-500',
-    },
-    {
-      id: '4',
-      type: 'group_invite',
-      title: 'Group invitation',
-      message: 'You have been invited to join "Weekend Tasks" group',
-      time: '1 day ago',
-      read: true,
-      icon: Users,
-      iconColor: 'text-purple-500',
-    },
-  ];
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { 
+    notifications, 
+    isLoading, 
+    unreadCount,
+    fetchUserNotifications, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification,
+    subscribeToNotifications 
+  } = useNotificationStore();
+  
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      // Initial fetch
+      fetchUserNotifications(user.id);
+      
+      // Set up real-time subscription
+      unsubscribeRef.current = subscribeToNotifications(user.id);
+      
+      // Cleanup subscription on unmount
+      return () => {
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+        }
+      };
+    }
+  }, [user, fetchUserNotifications, subscribeToNotifications]);
+
+  const handleNotificationAction = (notification: any) => {
+    // Navigate to relevant page based on notification type
+    switch (notification.type) {
+      case 'task_assigned':
+      case 'task_completed':
+      case 'task_approved':
+        navigate('/tasks');
+        break;
+      case 'group_invite':
+        navigate('/groups');
+        break;
+      case 'wishlist_gifted':
+        navigate('/wishlist');
+        break;
+      case 'points_earned':
+        navigate('/transactions');
+        break;
+      default:
+        break;
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Please log in to view notifications</h2>
+        <p className="text-gray-600">You need to be authenticated to view your notifications.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-600">Stay updated with your family activities</p>
+          <p className="text-gray-600">Stay updated with your family's activities</p>
         </div>
-        <button className="text-sm text-primary-600 hover:text-primary-500">
-          Mark all as read
-        </button>
+        <div className="text-sm text-gray-500">
+          {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {notifications.map((notification) => {
-          const Icon = notification.icon;
-          return (
-            <Card
-              key={notification.id}
-              className={`transition-colors ${
-                !notification.read ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
-              }`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <div className={`flex-shrink-0 ${notification.iconColor}`}>
-                    <Icon className="h-5 w-5" />
+      {/* Notifications List */}
+      <Card>
+        <CardContent className="p-6">
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="animate-pulse flex items-center space-x-4">
+                  <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-medium text-gray-900">
-                        {notification.title}
-                      </h3>
-                      <span className="text-xs text-gray-500">{notification.time}</span>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-600">{notification.message}</p>
-                  </div>
-                  {!notification.read && (
-                    <div className="flex-shrink-0">
-                      <div className="h-2 w-2 bg-primary-600 rounded-full"></div>
-                    </div>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {notifications.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Bell className="h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
-            <p className="text-gray-600 text-center">
-              You're all caught up! New notifications will appear here.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+              ))}
+            </div>
+          ) : (
+            <NotificationList
+              notifications={notifications}
+              onMarkAsRead={markAsRead}
+              onMarkAllAsRead={markAllAsRead}
+              onDelete={deleteNotification}
+              onAction={handleNotificationAction}
+              maxHeight="max-h-96"
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

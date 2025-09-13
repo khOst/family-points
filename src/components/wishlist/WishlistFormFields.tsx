@@ -14,7 +14,6 @@ interface WishlistFormFieldsProps {
   setForm: React.Dispatch<React.SetStateAction<WishlistForm>>;
   errors: WishlistFormErrors;
   groups: Group[];
-  user: User | null;
   isEdit?: boolean;
   handleGroupChange?: (groupId: string) => void;
 }
@@ -24,7 +23,6 @@ export function WishlistFormFields({
   setForm,
   errors,
   groups,
-  user,
   isEdit = false,
   handleGroupChange,
 }: WishlistFormFieldsProps) {

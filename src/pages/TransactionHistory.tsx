@@ -167,7 +167,7 @@ export function TransactionHistory() {
                 {Object.entries(TransactionTypeFilter).map(([key, value]) => (
                   <Button
                     key={value}
-                    variant={filter === value ? "default" : "outline"}
+                    variant={filter === value ? "primary" : "outline"}
                     size="sm"
                     onClick={() => setFilter(value)}
                   >
