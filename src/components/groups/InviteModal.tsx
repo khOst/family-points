@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Share, UserPlus, QrCode, X } from 'lucide-react';
+import { Copy, Share, UserPlus, QrCode } from 'lucide-react';
 import { Modal, Button } from '../ui';
 import type { Group } from '../../services/groupsService';
 
