@@ -49,7 +49,12 @@ export const useGroupsStore = create<GroupsStore>((set, get) => ({
         throw new Error('User not authenticated');
       }
       
-      const inviteCode = Math.random().toString(36).substr(2, 9).toUpperCase();
+      // Generate a 6-character alphanumeric invite code
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let inviteCode = '';
+      for (let i = 0; i < 6; i++) {
+        inviteCode += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
       await groupsService.createGroup({
         ...groupData,
         ownerId: user.id,

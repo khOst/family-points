@@ -48,10 +48,20 @@ service cloud.firestore {
                      true
                    );
       
-      // Only group owner can update group details
+      // Group owner can update group details
       allow update: if isGroupOwner(groupId) && 
                        // Prevent changing owner maliciously
                        request.resource.data.ownerId == resource.data.ownerId;
+      
+      // Allow users to add themselves to groups via invite code
+      allow update: if isAuthenticated() &&
+                       // User can only add themselves to memberIds
+                       request.auth.uid in request.resource.data.memberIds &&
+                       !(request.auth.uid in resource.data.memberIds) &&
+                       // Preserve all other fields
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'updatedAt']) &&
+                       // All existing members remain
+                       resource.data.memberIds.toSet().difference(request.resource.data.memberIds.toSet()).size() == 0;
       
       // Only group owner can delete the group
       allow delete: if isGroupOwner(groupId);

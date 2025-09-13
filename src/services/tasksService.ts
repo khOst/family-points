@@ -82,20 +82,38 @@ export const tasksService = {
 
   async getAllUserRelevantTasks(userId: string): Promise<Task[]> {
     try {
+      // First, get all groups the user belongs to
+      const userGroupsQuery = query(
+        collection(db, 'groups'),
+        where('memberIds', 'array-contains', userId)
+      );
+      const userGroupsSnapshot = await getDocs(userGroupsQuery);
+      const userGroupIds = userGroupsSnapshot.docs.map(doc => doc.id);
+      
+      // If user is not a member of any groups, return empty array
+      if (userGroupIds.length === 0) {
+        return [];
+      }
+      
       const queries = [
-        // Tasks assigned to the user
+        // Tasks assigned to the user (from their groups only)
         query(collection(db, 'tasks'), where('assignedTo', '==', userId)),
-        // Tasks created by the user
+        // Tasks created by the user (from their groups only)
         query(collection(db, 'tasks'), where('assignedBy', '==', userId)),
-        // Unassigned tasks (anyone can take them)
+        // Unassigned tasks (from their groups only)
         query(collection(db, 'tasks'), where('assignedTo', '==', 'unassigned'))
       ];
       
       const taskArrays = await Promise.all(queries.map(executeTaskQuery));
       const allTasks = taskArrays.flat();
       
+      // Filter tasks to only include those from groups the user belongs to
+      const filteredTasks = allTasks.filter(task => 
+        userGroupIds.includes(task.groupId)
+      );
+      
       // Deduplicate tasks by ID
-      const uniqueTasks = allTasks.reduce((acc, task) => {
+      const uniqueTasks = filteredTasks.reduce((acc, task) => {
         if (!acc.find(t => t.id === task.id)) {
           acc.push(task);
         }

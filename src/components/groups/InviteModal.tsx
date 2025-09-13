@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Share, UserPlus, QrCode } from 'lucide-react';
+import { Copy, Share, UserPlus } from 'lucide-react';
 import { Modal, Button } from '../ui';
 import type { Group } from '../../services/groupsService';
 
@@ -66,47 +66,37 @@ export function InviteModal({ isOpen, onClose, group }: InviteModalProps) {
           </div>
         </div>
 
-        {/* Invite Code */}
+        {/* Invite Code*/}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Invite Code
             </label>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2">
+            <div className="space-y-3">
+              <div className="bg-white border border-gray-300 rounded-lg px-3 py-2">
                 <code className="text-lg font-mono font-semibold text-center block tracking-wider">
                   {group.inviteCode}
                 </code>
               </div>
-              <Button
-                onClick={handleCopyInviteCode}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Copy className="h-4 w-4" />
-                {copied ? 'Copied!' : 'Copy'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleCopyInviteCode}
+                  variant="outline"
+                  className="flex-1 flex items-center gap-2 justify-center"
+                >
+                  <Copy className="h-4 w-4" />
+                  {copied ? 'Copied!' : 'Copy'}
+                </Button>
+                <Button
+                  onClick={handleShareInvite}
+                  variant="outline"
+                  className="flex-1 flex items-center gap-2 justify-center"
+                >
+                  <Share className="h-4 w-4" />
+                  Share
+                </Button>
+              </div>
             </div>
-          </div>
-
-          {/* Share Options */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={handleShareInvite}
-              variant="outline"
-              className="flex items-center gap-2 justify-center"
-            >
-              <Share className="h-4 w-4" />
-              Share Code
-            </Button>
-            <Button
-              onClick={handleCopyInviteCode}
-              variant="outline"
-              className="flex items-center gap-2 justify-center"
-            >
-              <QrCode className="h-4 w-4" />
-              Copy Code
-            </Button>
           </div>
         </div>
 

@@ -19,8 +19,8 @@ export function JoinGroupModal({ isOpen, onClose }: JoinGroupModalProps) {
   const [previewGroup, setPreviewGroup] = useState<Group | null>(null);
 
   const validateInviteCode = (code: string): boolean => {
-    // Invite codes should be 6 characters, alphanumeric, uppercase
-    const codeRegex = /^[A-Z0-9]{6}$/;
+    // Invite codes can be 6 or 9 characters (legacy), alphanumeric, uppercase
+    const codeRegex = /^[A-Z0-9]{6,9}$/;
     return codeRegex.test(code);
   };
 
@@ -34,7 +34,7 @@ export function JoinGroupModal({ isOpen, onClose }: JoinGroupModalProps) {
 
   const handlePreview = async () => {
     if (!validateInviteCode(inviteCode)) {
-      setError('Please enter a valid 6-character invite code');
+      setError('Please enter a valid invite code (6-9 characters)');
       return;
     }
 
@@ -52,7 +52,7 @@ export function JoinGroupModal({ isOpen, onClose }: JoinGroupModalProps) {
     }
 
     if (!validateInviteCode(inviteCode)) {
-      setError('Please enter a valid 6-character invite code');
+      setError('Please enter a valid invite code (6-9 characters)');
       return;
     }
 
@@ -98,13 +98,13 @@ export function JoinGroupModal({ isOpen, onClose }: JoinGroupModalProps) {
           <Input
             value={inviteCode}
             onChange={(e) => handleInviteCodeChange(e.target.value)}
-            placeholder="Enter 6-character code"
-            maxLength={6}
+            placeholder="Enter invite code"
+            maxLength={9}
             className="text-center text-lg font-mono tracking-wider"
             error={error}
           />
           <div className="text-xs text-gray-500 mt-1">
-            Enter the code exactly as shared with you (6 characters)
+            Enter the code exactly as shared with you (6-9 characters)
           </div>
         </div>
 
@@ -132,7 +132,7 @@ export function JoinGroupModal({ isOpen, onClose }: JoinGroupModalProps) {
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• Ask a group member to share their invite code with you</li>
             <li>• Group owners can find the code in their group settings</li>
-            <li>• The code is 6 characters (letters and numbers)</li>
+            <li>• The code is 6-9 characters (letters and numbers)</li>
             <li>• Each group has a unique code</li>
           </ul>
         </div>
@@ -150,7 +150,7 @@ export function JoinGroupModal({ isOpen, onClose }: JoinGroupModalProps) {
             Cancel
           </Button>
           
-          {inviteCode.length === 6 && !previewGroup && (
+          {validateInviteCode(inviteCode) && !previewGroup && (
             <Button
               type="button"
               variant="outline"
