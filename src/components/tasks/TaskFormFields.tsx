@@ -2,6 +2,7 @@ import { Calendar, Star, Users } from 'lucide-react';
 import { Input } from '../ui';
 import type { TaskForm, TaskFormErrors } from '../../hooks/useTaskForm';
 import type { Group } from '../../services/groupsService';
+import type { UserProfile } from '../../services/userService';
 
 interface User {
   id: string;
@@ -15,6 +16,7 @@ interface TaskFormFieldsProps {
   errors: TaskFormErrors;
   groups: Group[];
   selectedGroup: Group | undefined;
+  groupMembers: UserProfile[];
   user: User | null;
   getPointsColor: (points: number) => string;
   getPointsPriority: (points: number) => string;
@@ -28,6 +30,7 @@ export function TaskFormFields({
   errors,
   groups,
   selectedGroup,
+  groupMembers,
   user,
   getPointsColor,
   getPointsPriority,
@@ -161,9 +164,9 @@ export function TaskFormFields({
           disabled={!form.groupId}
         >
           <option value="unassigned">Anyone can take this task</option>
-          {selectedGroup?.memberIds.map((memberId: string) => (
-            <option key={memberId} value={memberId}>
-              {memberId === user?.id ? 'Me' : `Member ${memberId.slice(0, 8)}`}
+          {groupMembers.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.id === user?.id ? 'Me' : member.name}
             </option>
           ))}
         </select>

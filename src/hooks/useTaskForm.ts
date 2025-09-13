@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useAuthStore } from '../stores/authStore';
 import { getLastSelectedGroupId, setLastSelectedGroupId, getDefaultGroupId } from '../utils/groupSelection';
+import { userService, type UserProfile } from '../services/userService';
 import type { Task } from '../services/tasksService';
 
 export interface TaskForm {
@@ -52,6 +53,7 @@ export function useTaskForm({ isOpen, task, preselectedGroupId }: UseTaskFormOpt
 
   const [form, setForm] = useState<TaskForm>(getInitialFormState());
   const [errors, setErrors] = useState<TaskFormErrors>({});
+  const [groupMembers, setGroupMembers] = useState<UserProfile[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +65,8 @@ export function useTaskForm({ isOpen, task, preselectedGroupId }: UseTaskFormOpt
       }
     }
   }, [isOpen, task, fetchGroups, preselectedGroupId, getInitialFormState]);
+
+  const selectedGroup = groups.find(g => g.id === form.groupId);
 
   // Auto-select group when groups are loaded
   useEffect(() => {
@@ -76,7 +80,19 @@ export function useTaskForm({ isOpen, task, preselectedGroupId }: UseTaskFormOpt
     }
   }, [isOpen, groups, task, preselectedGroupId, form.groupId]);
 
-  const selectedGroup = groups.find(g => g.id === form.groupId);
+  // Fetch group members when selected group changes
+  useEffect(() => {
+    const fetchGroupMembers = async () => {
+      if (selectedGroup && selectedGroup.memberIds.length > 0) {
+        const members = await userService.getUsersByIds(selectedGroup.memberIds);
+        setGroupMembers(members);
+      } else {
+        setGroupMembers([]);
+      }
+    };
+
+    fetchGroupMembers();
+  }, [selectedGroup]);
 
   const validateForm = (): boolean => {
     const newErrors: TaskFormErrors = {};
@@ -167,6 +183,7 @@ export function useTaskForm({ isOpen, task, preselectedGroupId }: UseTaskFormOpt
     errors,
     groups,
     selectedGroup,
+    groupMembers,
     user,
     validateForm,
     prepareTaskData,

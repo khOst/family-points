@@ -19,6 +19,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
     errors,
     groups,
     selectedGroup,
+    groupMembers,
     user,
     validateForm,
     prepareTaskData,
@@ -59,6 +60,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
           errors={errors}
           groups={groups}
           selectedGroup={selectedGroup}
+          groupMembers={groupMembers}
           user={user}
           getPointsColor={getPointsColor}
           getPointsPriority={getPointsPriority}
