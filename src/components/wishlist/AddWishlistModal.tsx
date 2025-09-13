@@ -51,7 +51,6 @@ export function AddWishlistModal({ isOpen, onClose }: AddWishlistModalProps) {
           setForm={setForm}
           errors={errors}
           groups={groups}
-          user={user}
           isEdit={false}
           handleGroupChange={handleGroupChange}
         />

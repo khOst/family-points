@@ -3,12 +3,6 @@ import { Input } from '../ui';
 import type { WishlistForm, WishlistFormErrors } from '../../hooks/useWishlistForm';
 import type { Group } from '../../services/groupsService';
 
-interface User {
-  id: string;
-  name?: string;
-  email?: string;
-}
-
 interface WishlistFormFieldsProps {
   form: WishlistForm;
   setForm: React.Dispatch<React.SetStateAction<WishlistForm>>;

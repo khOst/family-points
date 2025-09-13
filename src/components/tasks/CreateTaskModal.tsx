@@ -17,7 +17,6 @@ export function CreateTaskModal({ isOpen, onClose, preselectedGroupId }: CreateT
     setForm,
     errors,
     groups,
-    selectedGroup,
     groupMembers,
     user,
     validateForm,
@@ -56,7 +55,6 @@ export function CreateTaskModal({ isOpen, onClose, preselectedGroupId }: CreateT
           setForm={setForm}
           errors={errors}
           groups={groups}
-          selectedGroup={selectedGroup}
           groupMembers={groupMembers}
           user={user}
           getPointsColor={getPointsColor}

@@ -18,7 +18,6 @@ export function EditWishlistModal({ isOpen, onClose, item }: EditWishlistModalPr
     setForm,
     errors,
     groups,
-    user,
     validateForm,
     prepareWishlistUpdates,
     resetForm,
@@ -54,7 +53,6 @@ export function EditWishlistModal({ isOpen, onClose, item }: EditWishlistModalPr
           setForm={setForm}
           errors={errors}
           groups={groups}
-          user={user}
           isEdit={true}
           handleGroupChange={handleGroupChange}
         />
