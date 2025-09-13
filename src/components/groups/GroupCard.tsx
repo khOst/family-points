@@ -64,13 +64,13 @@ export function GroupCard({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+        <div className="flex gap-2 pt-4 border-t border-gray-100">
           {onShowInvite && (
             <Button
               onClick={() => onShowInvite(group)}
               size="sm"
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex-1 flex items-center justify-center gap-2"
             >
               <UserPlus className="h-4 w-4" />
               Invite
@@ -82,20 +82,18 @@ export function GroupCard({
               onClick={() => onEdit(group)}
               size="sm"
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex-1 flex items-center justify-center gap-2"
             >
               <Settings className="h-4 w-4" />
               Edit
             </Button>
           )}
           
-          <div className="flex-1"></div>
-          
           <Button
             onClick={handleLeave}
             size="sm"
             variant="outline"
-            className="text-red-600 hover:text-red-700 hover:border-red-300"
+            className="flex-1 text-red-600 hover:text-red-700 hover:border-red-300"
           >
             Leave
           </Button>
