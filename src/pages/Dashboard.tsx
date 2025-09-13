@@ -294,37 +294,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-medium">Quick Actions</h3>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col"
-              onClick={() => setIsCreateTaskModalOpen(true)}
-            >
-              <Plus className="h-6 w-6 mb-2" />
-              <span className="text-sm">Create Task</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Users className="h-6 w-6 mb-2" />
-              <span className="text-sm">Join Group</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <Trophy className="h-6 w-6 mb-2" />
-              <span className="text-sm">View Points</span>
-            </Button>
-            <Button variant="outline" className="h-20 flex-col">
-              <CheckCircle className="h-6 w-6 mb-2" />
-              <span className="text-sm">Complete Task</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       <CreateTaskModal
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}

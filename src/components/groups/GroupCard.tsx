@@ -85,7 +85,7 @@ export function GroupCard({
               className="flex items-center gap-2"
             >
               <Settings className="h-4 w-4" />
-              Settings
+              Edit
             </Button>
           )}
           
@@ -97,7 +97,7 @@ export function GroupCard({
             variant="outline"
             className="text-red-600 hover:text-red-700 hover:border-red-300"
           >
-            Leave Group
+            Leave
           </Button>
         </div>
         

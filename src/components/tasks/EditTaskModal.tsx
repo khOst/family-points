@@ -26,6 +26,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
     getPointsColor,
     getPointsPriority,
     minDate,
+    handleGroupChange,
   } = useTaskForm({ isOpen, task });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -62,6 +63,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
           getPointsColor={getPointsColor}
           getPointsPriority={getPointsPriority}
           minDate={minDate}
+          handleGroupChange={handleGroupChange}
         />
 
         {/* Action Buttons */}

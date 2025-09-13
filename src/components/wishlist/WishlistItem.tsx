@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, Edit3, Trash2, Gift, DollarSign, Calendar, Star, CheckCircle } from 'lucide-react';
+import { ExternalLink, Edit3, Trash2, Gift, Calendar, Star, CheckCircle } from 'lucide-react';
 import { Card, CardContent, Button } from '../ui';
 import { cn } from '../../utils/cn';
 import { useAuthStore } from '../../stores/authStore';
@@ -116,17 +116,20 @@ export function WishlistItem({
             </div>
             
             <div className="text-right">
-              <div className="text-xl font-bold text-gray-900 flex items-center gap-1">
-                <DollarSign className="h-4 w-4" />
-                {formatPrice(item.cost)}
+              <div className="text-xl font-bold text-gray-900">
+                {item.cost > 0 ? formatPrice(item.cost) : (
+                  <span className="text-gray-400 text-sm font-normal">Price not set</span>
+                )}
               </div>
             </div>
           </div>
           
           {/* Description */}
-          {item.description && (
-            <p className="text-gray-600 text-sm mb-4">{item.description}</p>
-          )}
+          <p className="text-gray-600 text-sm mb-4">
+            {item.description || (
+              <span className="text-gray-400 italic">No description provided</span>
+            )}
+          </p>
           
           {/* Metadata */}
           <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">

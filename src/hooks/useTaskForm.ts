@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useGroupsStore } from '../stores/groupsStore';
 import { useAuthStore } from '../stores/authStore';
+import { getLastSelectedGroupId, setLastSelectedGroupId, getDefaultGroupId } from '../utils/groupSelection';
 import type { Task } from '../services/tasksService';
 
 export interface TaskForm {
@@ -62,6 +63,18 @@ export function useTaskForm({ isOpen, task, preselectedGroupId }: UseTaskFormOpt
       }
     }
   }, [isOpen, task, fetchGroups, preselectedGroupId, getInitialFormState]);
+
+  // Auto-select group when groups are loaded
+  useEffect(() => {
+    if (isOpen && groups.length > 0 && !task && !preselectedGroupId && !form.groupId) {
+      const lastSelectedId = getLastSelectedGroupId();
+      const defaultGroupId = getDefaultGroupId(groups, lastSelectedId || undefined);
+      
+      if (defaultGroupId) {
+        setForm(prev => ({ ...prev, groupId: defaultGroupId, assignedTo: 'unassigned' }));
+      }
+    }
+  }, [isOpen, groups, task, preselectedGroupId, form.groupId]);
 
   const selectedGroup = groups.find(g => g.id === form.groupId);
 
@@ -141,6 +154,13 @@ export function useTaskForm({ isOpen, task, preselectedGroupId }: UseTaskFormOpt
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
 
+  const handleGroupChange = (groupId: string) => {
+    setForm(prev => ({ ...prev, groupId, assignedTo: 'unassigned' }));
+    if (groupId) {
+      setLastSelectedGroupId(groupId);
+    }
+  };
+
   return {
     form,
     setForm,
@@ -154,5 +174,6 @@ export function useTaskForm({ isOpen, task, preselectedGroupId }: UseTaskFormOpt
     getPointsColor,
     getPointsPriority,
     minDate,
+    handleGroupChange,
   };
 }

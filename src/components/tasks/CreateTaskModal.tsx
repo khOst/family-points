@@ -25,6 +25,7 @@ export function CreateTaskModal({ isOpen, onClose, preselectedGroupId }: CreateT
     getPointsColor,
     getPointsPriority,
     minDate,
+    handleGroupChange,
   } = useTaskForm({ isOpen, preselectedGroupId });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,6 +60,7 @@ export function CreateTaskModal({ isOpen, onClose, preselectedGroupId }: CreateT
           getPointsColor={getPointsColor}
           getPointsPriority={getPointsPriority}
           minDate={minDate}
+          handleGroupChange={handleGroupChange}
         />
 
         {/* Action Buttons */}

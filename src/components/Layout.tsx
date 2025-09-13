@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, Users, CheckSquare, Heart, Bell, User, LogOut } from 'lucide-react';
+import { Home, Users, CheckSquare, Heart, User, LogOut } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useAuthStore } from '../stores/authStore';
 
@@ -14,7 +14,6 @@ export function Layout() {
     { name: 'Groups', href: '/groups', icon: Users },
     { name: 'Tasks', href: '/tasks', icon: CheckSquare },
     { name: 'Wishlist', href: '/wishlist', icon: Heart },
-    { name: 'Notifications', href: '/notifications', icon: Bell },
   ];
 
   const handleLogout = () => {
